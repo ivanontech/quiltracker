@@ -7,12 +7,12 @@ Instructions:
 3. sudo ufw allow 5000/tcp on host and miners
 4. Set up a cronjob on your miners to run every minute to grab your node peer ID and balances from track_balances.sh
     1. crontab -e
-    2. * * * * * /root/track_balances.sh
+    2. * * * * * /root/track_balances.sh ![image](https://github.com/user-attachments/assets/70e2eb34-b5bd-4ffb-8804-661c1fd600a0)
+
 5. Visit http://yourip:5000 to access the dashboard.
 6. Edit index.html if you wish to add your PEER ID with a local machine name, or delete if you wish
     <li><PeerID:</strong> device name</li>
-    <li><PeerID:</strong> device name</li>
-    <li><PeerID:</strong> device name</li>
+
 8. Enjoy, Quil and Chill
 
                
