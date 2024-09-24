@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Balances and Metrics</title>
+    <style>
+        /* Basic styling */
+        body {
+            background-color: #f0f0f0; /* Light grey background */
+            color: #333; /* Dark grey text for better readability */
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #005f73; /* Dark teal for headings */
+            font-size: 24px;
+        }
+
+        .legend {
+            margin-bottom: 20px; /* Add some spacing below the legend */
+            color: #0a9396; /* Teal color for legend */
+            font-size: 18px;
+        }
+
+        .legend ul {
+            list-style-type: none; /* Remove bullet points */
+            padding: 0;
+        }
+
+        .legend ul li {
+            margin-bottom: 8px; /* Add spacing between items */
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666; /* Grey color for footer */
+        }
+
+        a {
+            color: #005f73; /* Dark teal for links */
+        }
+    </style>
+</head>
+<body>
+    <!-- Peer ID to Server Name Legend at the top -->
+    <div class="legend">
+        <h3>Peer ID to Server Name Mapping:</h3>
+        <ul>
+            <li><PeerID:</strong> device name</li>
+            <li><PeerID:</strong> device name</li>
+            <li><PeerID:</strong> device name</li>
+        </ul>
+    </div>
+
+    <!-- Display the interactive Plotly chart for Node Balances Over Time -->
+    <h1>Node Balances Over Time</h1>
+    <div>{{ balance_graph_html | safe }}</div>
+
+    <!-- Display the interactive Plotly chart for Quil Earned Per Minute -->
+    <h1>Quil Earned Per Minute</h1>
+    <div>{{ quil_minute_graph_html | safe }}</div>
+
+    <!-- Display the interactive Plotly chart for Hourly Growth in Quil -->
+    <h1>Hourly Growth in Quil</h1>
+    <div>{{ hourly_growth_graph_html | safe }}</div>
+
+    <footer>
+        <p>Data visualized from your node logs.</p>
+        <p>Made by Delist, For more information, visit <a href="https://status.quilibrium.com/">Quilibrium Status</a>.</p>
+    </footer>
+</body>
+</html>
