@@ -11,7 +11,7 @@ Instructions:
     2. * * * * * /root/track_balances.sh ![image](https://github.com/user-attachments/assets/70e2eb34-b5bd-4ffb-8804-661c1fd600a0)
 
 6. Visit http://yourip:5000 to access the dashboard.
-7. Edit index.html if you wish to add your PEER ID with a local machine name, or delete if you wish: <li><PeerID:</strong> device name</li>
+7. Edit index.html if you wish to add your PEER ID with a local machine name, or delete if you wish: **<li><PeerID:</strong> device name</li>**
 8. Enjoy, Quil and Chill
 
                
