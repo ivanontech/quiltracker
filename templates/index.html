@@ -51,11 +51,19 @@
     <div class="legend">
         <h3>Peer ID to Server Name Mapping:</h3>
         <ul>
-            <li><PeerID:</strong> device name</li>
-            <li><PeerID:</strong> device name</li>
-            <li><PeerID:</strong> device name</li>
+            <li><strong>QmXbcgCK3B9s62SkwFYQWR1uWoxNqh6EsUwcYQN1xwXVTn:</strong> macmini</li>
+            <li><strong>QmWP9PeTDhXwR2RVNUT46W2FS5ymG2wZjKosLSNjNg2FZv:</strong> shinning</li>
+            <li><strong>QmP5yo7Jkq4hSU3DEaiM7y5CtEMUudHqWYdtwJe26VK1G4:</strong> usable-tapir</li>
+            <li><strong>QmUg5kSXUimgKvna9ZJ89TCBwj88Fhm33TEneiceyLAnzF:</strong> macstudio</li>
+            <li><strong>QmbcHoTggLHsxKSisWTxQ8L4Uom45PFZTmu2dzyFR86So8:</strong> clear-flea</li>
+            <li><strong>QmeCifSB3o1BULHsGDUDXMXft8mdMzDw3jCZEx9EbUw2mj:</strong> megatron</li>
+            <li><strong>QmSnHE1t6ttkUvovUoQ9tEtATaN5rRRGkh41Qdx7LzdEEo:</strong> miniboss</li>
         </ul>
     </div>
+
+    <!-- Display the current wQUIL price -->
+    <h1>Current wQUIL Price</h1>
+    <p>Price in USD: ${{ wquil_price }}</p>
 
     <!-- Display the interactive Plotly chart for Node Balances Over Time -->
     <h1>Node Balances Over Time</h1>
@@ -68,6 +76,10 @@
     <!-- Display the interactive Plotly chart for Hourly Growth in Quil -->
     <h1>Hourly Growth in Quil</h1>
     <div>{{ hourly_growth_graph_html | safe }}</div>
+
+    <!-- Display the interactive Plotly chart for Hourly Earnings in USD -->
+    <h1>Hourly Earnings in USD</h1>
+    <div>{{ earnings_graph_html | safe }}</div>
 
     <footer>
         <p>Data visualized from your node logs.</p>
