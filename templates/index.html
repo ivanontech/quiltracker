@@ -5,93 +5,145 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node Balances and Metrics</title>
     <style>
-        /* Basic styling */
+        @font-face {
+            font-family: 'Proxima Nova Alt Bold';
+            src: url('https://cdn.example.com/proxima-nova-alt-bold.woff2') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+
         body {
-            background-color: #f0f0f0; /* Light grey background */
-            color: #333; /* Dark grey text for better readability */
-            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            font-family: 'Proxima Nova Alt Bold', Arial, sans-serif;
             margin: 0;
             padding: 20px;
             text-align: center;
         }
 
         h1 {
-            color: #005f73; /* Dark teal for headings */
-            font-size: 24px;
+            color: #005f73;
+            font-size: 28px;
+            margin-bottom: 15px;
         }
 
-        .legend {
-            margin-bottom: 20px; /* Add some spacing below the legend */
-            color: #0a9396; /* Teal color for legend */
-            font-size: 18px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
         }
 
-        .legend ul {
-            list-style-type: none; /* Remove bullet points */
-            padding: 0;
+        table, th, td {
+            border: 1px solid #ccc;
         }
 
-        .legend ul li {
-            margin-bottom: 8px; /* Add spacing between items */
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #005f73;
+            color: white;
         }
 
         footer {
-            margin-top: 20px;
+            margin-top: 30px;
             font-size: 14px;
-            color: #666; /* Grey color for footer */
+            color: #666;
         }
 
-        a {
-            color: #005f73; /* Dark teal for links */
+        .wallets {
+            margin-top: 20px;
         }
+
+        .wallets .wallet-address {
+            font-weight: bold;
+        }
+
+        .wallets p {
+            margin: 10px 0;
+        }
+
     </style>
     <script>
         // Set a timer to refresh the page every 75 seconds
         setTimeout(function(){
             window.location.reload(1);
         }, 75000);  // 75 seconds in milliseconds
+
+        function loadCustomNodeNames() {
+            const nodes = document.querySelectorAll('.node-input');
+            nodes.forEach(node => {
+                const storedName = localStorage.getItem(node.id);
+                if (storedName) {
+                    node.value = storedName;
+                }
+                node.addEventListener('input', (e) => {
+                    localStorage.setItem(e.target.id, e.target.value);
+                });
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", loadCustomNodeNames);
     </script>
 </head>
 <body>
     <!-- Display the total balance of all peers -->
     <h1>Total Quil Across All Peers: {{ total_balance }} Quil</h1>
 
-    <!-- Peer ID to Server Name Legend at the top -->
-    <div class="legend">
-        <h3>Peer ID to Server Name Mapping:</h3>
-        <ul>
-            <li><strong>PeerID:</strong> device name</li>
-            <li><strong>PeerID:</strong> device name</li>
-            <li><strong>PeerID:</strong> device name</li>
-        </ul>
-    </div>
-
     <!-- Display the current wQUIL price -->
     <h1>Current wQUIL Price</h1>
     <p>Price in USD: ${{ wquil_price }}</p>
 
-    <!-- Display the interactive Plotly chart for Node Balances Over Time -->
+    <!-- Display Node Statistics table -->
+    <h1>Node Statistics</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Node</th> <!-- Changed "Device (Host) Name" to "Node" -->
+                <th>Peer ID</th>
+                <th>Quil Balance</th>
+                <th>Quil Per Minute</th>
+                <th>Quil Per Hour</th> <!-- Added Quil Per Hour back -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_data %}
+            <tr>
+                <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td> <!-- Editable Node Names -->
+                <td>{{ row['Peer ID'] }}</td>
+                <td>{{ row['Balance'] }}</td>
+                <td>{{ row['Quil Per Minute'] }}</td>
+                <td>{{ row['Quil Per Hour'] }}</td> <!-- Quil Per Hour Added -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Display the interactive Plotly charts -->
     <h1>Node Balances Over Time</h1>
     <div>{{ balance_graph_html | safe }}</div>
 
-    <!-- Display the interactive Plotly chart for Quil Earned Per Minute -->
     <h1>Quil Earned Per Minute</h1>
     <div>{{ quil_minute_graph_html | safe }}</div>
 
-    <!-- Display the interactive Plotly chart for Hourly Growth in Quil -->
     <h1>Hourly Growth in Quil</h1>
     <div>{{ hourly_growth_graph_html | safe }}</div>
 
-    <!-- Display the interactive Plotly chart for Earnings in USD per Hour -->
     <h1>Earnings in USD per Hour</h1>
     <div>{{ earnings_per_hour_graph_html | safe }}</div>
 
-    <!-- Display the interactive Plotly chart for Earnings in USD per Minute -->
     <h1>Earnings in USD per Minute</h1>
     <div>{{ earnings_per_minute_graph_html | safe }}</div>
 
+    <!-- Footer with wallet details -->
     <footer>
         <p>Data visualized from your node logs.</p>
+        <div class="wallets">
+            <p>Buy me a Coffee (Ethereum): <span class="wallet-address">0x705242cF0ec57707ed96163D324e5c1caA9f781C</span></p>
+            <p class="solana-address">Solana: <span class="wallet-address">9TiE9BWnkFuhudv39uDZPdpoxzBhKnCWrQ1Qx5iyjuSg</span></p>
+        </div>
         <p>For more information, visit <a href="https://status.quilibrium.com/">Quilibrium Status</a>.</p>
     </footer>
 </body>
