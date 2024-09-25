@@ -77,9 +77,6 @@ def index():
         # Compute Quil earned per minute and hour
         combined_df, hourly_growth_df = compute_metrics(combined_df, wquil_price)
 
-        # Calculate the total balance across all Peer IDs
-        total_balance = round(latest_balances['Balance'].sum(), 4)
-
         # Calculate Quil per minute and per hour for each Peer ID
         quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].mean()
         quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].mean()
@@ -89,7 +86,13 @@ def index():
         # Data for the table (with Quil Per Hour and Quil Per Minute)
         table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Minute', 'Quil Per Hour']]
 
-        # Convert to list of dictionaries for easy templating
+        # Calculate total values
+        total_quil_balance = table_data['Balance'].sum()
+        total_quil_per_minute = table_data['Quil Per Minute'].sum()
+        total_quil_per_hour = table_data['Quil Per Hour'].sum()
+        total_dollars_per_hour = (table_data['Quil Per Hour'] * wquil_price).sum()
+
+        # Convert table data to list of dictionaries for easy templating
         table_data = table_data.to_dict(orient='records')
 
         # Plot: Node Balances Over Time
@@ -135,20 +138,23 @@ def index():
         hourly_growth_graph_html = ""
         earnings_per_hour_graph_html = ""
         earnings_per_minute_graph_html = ""
-        total_balance = 0  # If no data, set total balance to 0
-        wquil_price = 0  # Default price if fetching fails
-        table_data = []  # Empty table data if no data is found
+        total_quil_balance = 0
+        total_quil_per_minute = 0
+        total_quil_per_hour = 0
+        total_dollars_per_hour = 0
+        table_data = []
 
     return render_template('index.html', balance_graph_html=balance_graph_html,
                            quil_minute_graph_html=quil_minute_graph_html,
                            hourly_growth_graph_html=hourly_growth_graph_html,
                            earnings_per_hour_graph_html=earnings_per_hour_graph_html,
                            earnings_per_minute_graph_html=earnings_per_minute_graph_html,
-                           total_balance=total_balance,
+                           total_balance=total_quil_balance,
+                           total_quil_per_minute=total_quil_per_minute,
+                           total_quil_per_hour=total_quil_per_hour,
+                           total_dollars_per_hour=total_dollars_per_hour,
                            wquil_price=wquil_price,
                            table_data=table_data)
-
-
 
 # Route to handle balance data from servers
 @app.route('/update_balance', methods=['POST'])
