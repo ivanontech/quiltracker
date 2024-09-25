@@ -101,23 +101,34 @@
     <table>
         <thead>
             <tr>
-                <th>Node</th> <!-- Changed "Device (Host) Name" to "Node" -->
+                <th>Node</th>
                 <th>Peer ID</th>
                 <th>Quil Balance</th>
                 <th>Quil Per Minute</th>
-                <th>Quil Per Hour</th> <!-- Added Quil Per Hour back -->
+                <th>Quil Per Hour</th>
+                <th>$ Per Hour</th> <!-- Added $ Per Hour -->
             </tr>
         </thead>
         <tbody>
             {% for row in table_data %}
             <tr>
-                <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td> <!-- Editable Node Names -->
+                <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td>
                 <td>{{ row['Peer ID'] }}</td>
                 <td>{{ row['Balance'] }}</td>
                 <td>{{ row['Quil Per Minute'] }}</td>
-                <td>{{ row['Quil Per Hour'] }}</td> <!-- Quil Per Hour Added -->
+                <td>{{ row['Quil Per Hour'] }}</td>
+                <td>${{ (row['Quil Per Hour'] * wquil_price) | round(6) }}</td>
             </tr>
             {% endfor %}
+            <!-- Totals Row -->
+            <tr style="font-weight: bold;">
+                <td>Total</td>
+                <td></td> <!-- Empty column for Peer ID -->
+                <td>{{ total_balance | round(6) }}</td>
+                <td>{{ total_quil_per_minute | round(6) }}</td>
+                <td>{{ total_quil_per_hour | round(6) }}</td>
+                <td>${{ total_dollars_per_hour | round(6) }}</td> <!-- Total $ per hour -->
+            </tr>
         </tbody>
     </table>
 
