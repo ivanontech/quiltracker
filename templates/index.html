@@ -47,6 +47,9 @@
     </style>
 </head>
 <body>
+    <!-- Display the total balance of all peers -->
+    <h1>Total Quil Across All Peers: {{ total_balance }} Quil</h1>
+
     <!-- Peer ID to Server Name Legend at the top -->
     <div class="legend">
         <h3>Peer ID to Server Name Mapping:</h3>
@@ -56,7 +59,7 @@
             <li><strong>QmP5yo7Jkq4hSU3DEaiM7y5CtEMUudHqWYdtwJe26VK1G4:</strong> usable-tapir</li>
             <li><strong>QmUg5kSXUimgKvna9ZJ89TCBwj88Fhm33TEneiceyLAnzF:</strong> macstudio</li>
             <li><strong>QmbcHoTggLHsxKSisWTxQ8L4Uom45PFZTmu2dzyFR86So8:</strong> clear-flea</li>
-            <li><strong>QmeCifSB3o1BULHsGDUDXMXft8mdMzDw3jCZEx9EbUw2mj:</strong> megatron</li>
+            <li><strong>QmeCifSB301BULHsGDUDXMf8mdMzDw3jCzEx9EbUw2mj:</strong> megatron</li>
             <li><strong>QmSnHE1t6ttkUvovUoQ9tEtATaN5rRRGkh41Qdx7LzdEEo:</strong> miniboss</li>
         </ul>
     </div>
@@ -77,13 +80,18 @@
     <h1>Hourly Growth in Quil</h1>
     <div>{{ hourly_growth_graph_html | safe }}</div>
 
-    <!-- Display the interactive Plotly chart for Hourly Earnings in USD -->
-    <h1>Hourly Earnings in USD</h1>
-    <div>{{ earnings_graph_html | safe }}</div>
+    <!-- Display the interactive Plotly chart for Earnings in USD per Hour -->
+    <h1>Earnings in USD per Hour</h1>
+    <div>{{ earnings_per_hour_graph_html | safe }}</div>
+
+    <!-- Display the interactive Plotly chart for Earnings in USD per Minute -->
+    <h1>Earnings in USD per Minute</h1>
+    <div>{{ earnings_per_minute_graph_html | safe }}</div>
 
     <footer>
         <p>Data visualized from your node logs.</p>
-        <p>Made by Delist, For more information, visit <a href="https://status.quilibrium.com/">Quilibrium Status</a>.</p>
+        <p>For more information, visit <a href="https://status.quilibrium.com/">Quilibrium Status</a>.</p>
     </footer>
 </body>
 </html>
+
