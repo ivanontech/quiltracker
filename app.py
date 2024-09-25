@@ -34,6 +34,9 @@ def compute_metrics(df, wquil_price):
     df['Quil_Per_Minute'] = df.groupby('Peer ID')['Balance'].diff() / df['Time_Diff']
     df['Quil_Per_Minute'] = df['Quil_Per_Minute'].fillna(0)
 
+    # Calculate Quil per hour (60 * Quil per minute)
+    df['Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60
+
     # Calculate cumulative growth per hour
     df['Hour'] = df['Date'].dt.floor('h')
     hourly_growth = df.groupby(['Peer ID', 'Hour'])['Balance'].last().reset_index()
@@ -71,11 +74,23 @@ def index():
         # Remove duplicates and keep only the most recent balance for each Peer ID
         latest_balances = combined_df.groupby('Peer ID').last().reset_index()
 
-        # Compute Quil earned per minute and hourly growth
+        # Compute Quil earned per minute and hour
         combined_df, hourly_growth_df = compute_metrics(combined_df, wquil_price)
 
         # Calculate the total balance across all Peer IDs
         total_balance = round(latest_balances['Balance'].sum(), 4)
+
+        # Calculate Quil per minute and per hour for each Peer ID
+        quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].mean()
+        quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].mean()
+        latest_balances['Quil Per Minute'] = quil_per_minute.values
+        latest_balances['Quil Per Hour'] = quil_per_hour.values
+
+        # Data for the table (with Quil Per Hour and Quil Per Minute)
+        table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Minute', 'Quil Per Hour']]
+
+        # Convert to list of dictionaries for easy templating
+        table_data = table_data.to_dict(orient='records')
 
         # Plot: Node Balances Over Time
         balance_fig = px.line(combined_df, x='Date', y='Balance', color='Peer ID',
@@ -122,6 +137,7 @@ def index():
         earnings_per_minute_graph_html = ""
         total_balance = 0  # If no data, set total balance to 0
         wquil_price = 0  # Default price if fetching fails
+        table_data = []  # Empty table data if no data is found
 
     return render_template('index.html', balance_graph_html=balance_graph_html,
                            quil_minute_graph_html=quil_minute_graph_html,
@@ -129,7 +145,9 @@ def index():
                            earnings_per_hour_graph_html=earnings_per_hour_graph_html,
                            earnings_per_minute_graph_html=earnings_per_minute_graph_html,
                            total_balance=total_balance,
-                           wquil_price=wquil_price)
+                           wquil_price=wquil_price,
+                           table_data=table_data)
+
 
 
 # Route to handle balance data from servers
@@ -172,4 +190,3 @@ def update_balance():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-
