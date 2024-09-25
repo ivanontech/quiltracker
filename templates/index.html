@@ -45,6 +45,12 @@
             color: #005f73; /* Dark teal for links */
         }
     </style>
+    <script>
+        // Set a timer to refresh the page every 75 seconds
+        setTimeout(function(){
+            window.location.reload(1);
+        }, 75000);  // 75 seconds in milliseconds
+    </script>
 </head>
 <body>
     <!-- Display the total balance of all peers -->
@@ -54,7 +60,6 @@
     <div class="legend">
         <h3>Peer ID to Server Name Mapping:</h3>
         <ul>
-            <li><strong>PeerID:</strong> device name</li>
             <li><strong>PeerID:</strong> device name</li>
             <li><strong>PeerID:</strong> device name</li>
             <li><strong>PeerID:</strong> device name</li>
@@ -91,4 +96,3 @@
     </footer>
 </body>
 </html>
-
