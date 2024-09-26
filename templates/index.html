@@ -146,6 +146,12 @@
             });
         }
 
+        function toggleNightMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const nightMode = urlParams.get('night_mode') === 'on' ? 'off' : 'on';
+            window.location.href = `/?night_mode=${nightMode}`;
+        }
+
         document.addEventListener("DOMContentLoaded", loadCustomNodeNames);
     </script>
 </head>
@@ -161,7 +167,7 @@
     <div style="text-align: right; margin-bottom: 20px;">
         <label for="nightMode">Night Mode</label>
         <label class="switch">
-            <input type="checkbox" id="nightMode">
+            <input type="checkbox" id="nightMode" {% if night_mode == 'on' %}checked{% endif %} onclick="toggleNightMode()">
             <span class="slider"></span>
         </label>
 
@@ -195,9 +201,9 @@
                 <td>{{ "{:.4f}".format(row['Balance'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
-                <td>{{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Day'] | default(0.0)) }}</td>
-                <td>{{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
             </tr>
             {% endfor %}
             <!-- Totals row -->
