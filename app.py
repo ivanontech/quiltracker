@@ -34,32 +34,56 @@ def compute_metrics(df, wquil_price):
     df['Quil_Per_Minute'] = df.groupby('Peer ID')['Balance'].diff() / df['Time_Diff']
     df['Quil_Per_Minute'] = df['Quil_Per_Minute'].fillna(0)
 
-    # Get the latest minute's data for Quil per minute
-    latest_minute_df = df.groupby('Peer ID').tail(1).copy()
-
-    # Calculate Quil per hour (based on the second-to-last hour)
+    # Calculate Quil per hour (historical hourly growth)
     df['Hour'] = df['Date'].dt.floor('h')
     hourly_growth = df.groupby(['Peer ID', 'Hour'])['Balance'].last().reset_index()
     hourly_growth['Growth'] = hourly_growth.groupby('Peer ID')['Balance'].diff().fillna(0)
 
-    # Use the second-to-last hour's data for Quil per hour
-    second_to_last_hour = hourly_growth.groupby('Peer ID').tail(2).groupby('Peer ID').head(1)
-
-    # Calculate Quil per hour (using growth from second-to-last hour)
-    second_to_last_hour['Quil_Per_Hour'] = second_to_last_hour['Growth'] / (1)  # Growth per hour
-    second_to_last_hour['Earnings_USD'] = second_to_last_hour['Growth'] * wquil_price
+    # Calculate Quil per hour and earnings for each hour
+    hourly_growth['Quil_Per_Hour'] = hourly_growth['Growth']  # Growth per hour
+    hourly_growth['Earnings_USD'] = hourly_growth['Growth'] * wquil_price
 
     # Calculate earnings per minute
     df['Earnings_Per_Minute'] = df['Quil_Per_Minute'] * wquil_price
 
-    # Merging back with the original dataframe
+    # Merging back with the original dataframe for Quil per minute
+    latest_minute_df = df.groupby('Peer ID').tail(1).copy()
     df = pd.merge(df, latest_minute_df[['Peer ID', 'Quil_Per_Minute']], on='Peer ID', how='left', suffixes=('', '_latest'))
     df['Quil_Per_Minute'] = df['Quil_Per_Minute_latest'].fillna(df['Quil_Per_Minute'])
 
-    # Now adding back the Quil_Per_Hour based on second-to-last hour's data
-    df = pd.merge(df, second_to_last_hour[['Peer ID', 'Quil_Per_Hour']], on='Peer ID', how='left')
+    return df, hourly_growth
 
-    return df, second_to_last_hour
+# Route to handle balance data from servers
+@app.route('/update_balance', methods=['POST'])
+def update_balance():
+    try:
+        data = request.get_json()
+        if not data:
+            return 'No data received', 400
+
+        peer_id = data.get('peer_id')
+        balance = data.get('balance')
+        timestamp = data.get('timestamp')
+
+        if not peer_id or not balance or not timestamp:
+            return 'Missing required fields', 400
+
+        log_file = os.path.join(CSV_DIRECTORY, f'node_balance_{peer_id}.csv')
+
+        # Check if the file exists, if not, create it and add headers
+        if not os.path.exists(log_file):
+            with open(log_file, 'w') as f:
+                f.write('Date,Peer ID,Balance\n')
+
+        # Append the new balance data with timestamp
+        with open(log_file, 'a') as f:
+            f.write(f'{timestamp},{peer_id},{balance}\n')
+
+        return 'Balance recorded', 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return 'Internal Server Error', 500
 
 @app.route('/')
 def index():
@@ -96,9 +120,9 @@ def index():
 
         # Calculate Quil per minute and per hour for each Peer ID
         quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].last()
-        quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].last()
-        quil_per_day = combined_df.groupby('Peer ID')['Quil_Per_Hour'].last() * 24
-        dollar_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].last() * wquil_price
+        quil_per_hour = hourly_growth_df.groupby('Peer ID')['Quil_Per_Hour'].last()
+        quil_per_day = quil_per_hour * 24
+        dollar_per_hour = hourly_growth_df.groupby('Peer ID')['Earnings_USD'].last()
         dollar_per_day = dollar_per_hour * 24
 
         latest_balances['Quil Per Minute'] = quil_per_minute.values
@@ -145,12 +169,6 @@ def index():
                                        labels={'Earnings_USD': 'Earnings (USD)', 'Hour': 'Hour'},
                                        hover_data={'Peer ID': True, 'Earnings_USD': True})
 
-        # Plot: Earnings per Minute in USD
-        earnings_per_minute_fig = px.line(combined_df, x='Date', y='Earnings_Per_Minute', color='Peer ID',
-                                          title='Earnings in USD per Minute',
-                                          labels={'Earnings_Per_Minute': 'Earnings (USD/Min)', 'Date': 'Date'},
-                                          hover_data={'Peer ID': True, 'Earnings_Per_Minute': True})
-
         # Set theme based on night mode
         chart_template = 'plotly_dark' if night_mode == 'on' else 'plotly'
 
@@ -159,14 +177,12 @@ def index():
         quil_per_minute_fig.update_layout(template=chart_template)
         hourly_growth_fig.update_layout(template=chart_template)
         earnings_per_hour_fig.update_layout(template=chart_template)
-        earnings_per_minute_fig.update_layout(template=chart_template)
 
         # Convert Plotly figures to HTML for rendering
         balance_graph_html = balance_fig.to_html(full_html=False)
         quil_minute_graph_html = quil_per_minute_fig.to_html(full_html=False)
         hourly_growth_graph_html = hourly_growth_fig.to_html(full_html=False)
         earnings_per_hour_graph_html = earnings_per_hour_fig.to_html(full_html=False)
-        earnings_per_minute_graph_html = earnings_per_minute_fig.to_html(full_html=False)
 
     else:
         table_data = []
@@ -174,7 +190,7 @@ def index():
         total_dollar_per_hour = total_quil_per_day = total_dollar_per_day = 0
 
         balance_graph_html = quil_minute_graph_html = hourly_growth_graph_html = ""
-        earnings_per_hour_graph_html = earnings_per_minute_graph_html = ""
+        earnings_per_hour_graph_html = ""
 
     return render_template('index.html',
                            table_data=table_data,
@@ -188,41 +204,8 @@ def index():
                            quil_minute_graph_html=quil_minute_graph_html,
                            hourly_growth_graph_html=hourly_growth_graph_html,
                            earnings_per_hour_graph_html=earnings_per_hour_graph_html,
-                           earnings_per_minute_graph_html=earnings_per_minute_graph_html,
                            wquil_price=wquil_price,
                            night_mode=night_mode)
-
-
-# Route to handle balance data from servers
-@app.route('/update_balance', methods=['POST'])
-def update_balance():
-    try:
-        data = request.get_json()
-        if not data:
-            return 'No data received', 400
-
-        peer_id = data.get('peer_id')
-        balance = data.get('balance')
-        timestamp = data.get('timestamp')
-
-        if not peer_id or not balance or not timestamp:
-            return 'Missing required fields', 400
-
-        log_file = os.path.join(CSV_DIRECTORY, f'node_balance_{peer_id}.csv')
-
-        if not os.path.exists(log_file):
-            with open(log_file, 'w') as f:
-                f.write('Date,Peer ID,Balance\n')
-
-        with open(log_file, 'a') as f:
-            f.write(f'{timestamp},{peer_id},{balance}\n')
-
-        return 'Balance recorded', 200
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return 'Internal Server Error', 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
