@@ -34,24 +34,33 @@ def compute_metrics(df, wquil_price):
     df['Quil_Per_Minute'] = df.groupby('Peer ID')['Balance'].diff() / df['Time_Diff']
     df['Quil_Per_Minute'] = df['Quil_Per_Minute'].fillna(0)
 
-    # Calculate Quil per hour (60 * Quil per minute)
-    df['Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60
+    # Get the latest minute's data for Quil per minute
+    latest_minute_df = df.groupby('Peer ID').tail(1).copy()
 
-    # Calculate Quil per day (24 * Quil per hour)
-    df['Quil_Per_Day'] = df['Quil_Per_Hour'] * 24
-
-    # Calculate cumulative growth per hour
+    # Calculate Quil per hour (based on the second-to-last hour)
     df['Hour'] = df['Date'].dt.floor('h')
     hourly_growth = df.groupby(['Peer ID', 'Hour'])['Balance'].last().reset_index()
     hourly_growth['Growth'] = hourly_growth.groupby('Peer ID')['Balance'].diff().fillna(0)
+    
+    # Use the second-to-last hour's data for Quil per hour
+    second_to_last_hour = hourly_growth.groupby('Peer ID').tail(2).groupby('Peer ID').head(1)
 
-    # Calculate earnings in USD
-    hourly_growth['Earnings_USD'] = hourly_growth['Growth'] * wquil_price
+    # Calculate Quil per hour (using growth from second-to-last hour)
+    second_to_last_hour['Quil_Per_Hour'] = second_to_last_hour['Growth'] / (1)  # Growth per hour
+    second_to_last_hour['Earnings_USD'] = second_to_last_hour['Growth'] * wquil_price
+
+    # Calculate earnings per minute
     df['Earnings_Per_Minute'] = df['Quil_Per_Minute'] * wquil_price
-    df['Earnings_Per_Hour'] = df['Quil_Per_Hour'] * wquil_price
-    df['Earnings_Per_Day'] = df['Quil_Per_Day'] * wquil_price
 
-    return df, hourly_growth
+    # Merging back with the original dataframe
+    df = pd.merge(df, latest_minute_df[['Peer ID', 'Quil_Per_Minute']], on='Peer ID', how='left', suffixes=('', '_latest'))
+    df['Quil_Per_Minute'] = df['Quil_Per_Minute_latest'].fillna(df['Quil_Per_Minute'])
+
+    # Now adding back the Quil_Per_Hour based on second-to-last hour's data
+    df = pd.merge(df, second_to_last_hour[['Peer ID', 'Quil_Per_Hour']], on='Peer ID', how='left')
+
+    return df, second_to_last_hour
+
 
 @app.route('/')
 def index():
