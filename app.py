@@ -84,22 +84,22 @@ def index():
         combined_df, hourly_growth_df = compute_metrics(combined_df, wquil_price)
 
         # Calculate the total balance across all Peer IDs
-        total_balance = round(latest_balances['Balance'].sum(), 4)
+        total_quil_balance = round(latest_balances['Balance'].sum(), 4)
 
-        # Calculate Quil per minute for the most recent minute of data
-        last_minute_df = combined_df.groupby('Peer ID').last().reset_index()
+        # Calculate Quil per minute and per hour for each Peer ID
+        quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].mean()
+        quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].mean()
+        quil_per_day = combined_df.groupby('Peer ID')['Quil_Per_Day'].mean()
+        dollar_per_hour = combined_df.groupby('Peer ID')['Earnings_Per_Hour'].mean()
+        dollar_per_day = combined_df.groupby('Peer ID')['Earnings_Per_Day'].mean()
 
-        # Calculate Quil per hour using the second-to-last hour
-        second_to_last_hour_df = combined_df.groupby('Peer ID').nth(-2).reset_index()
-
-        latest_balances['Quil Per Minute'] = last_minute_df['Quil_Per_Minute'].values
-        latest_balances['Quil Per Hour'] = second_to_last_hour_df['Quil_Per_Hour'].values
-        latest_balances['Quil Per Day'] = latest_balances['Quil Per Hour'] * 24
-        latest_balances['$ Per Hour'] = latest_balances['Quil Per Hour'] * wquil_price
-        latest_balances['$ Per Day'] = latest_balances['Quil Per Day'] * wquil_price
+        latest_balances['Quil Per Minute'] = quil_per_minute.values
+        latest_balances['Quil Per Hour'] = quil_per_hour.values
+        latest_balances['Quil Per Day'] = quil_per_day.values
+        latest_balances['$ Per Hour'] = dollar_per_hour.values
+        latest_balances['$ Per Day'] = dollar_per_day.values
 
         # Sum for the totals row
-        total_quil_balance = latest_balances['Balance'].sum()
         total_quil_per_minute = latest_balances['Quil Per Minute'].sum()
         total_quil_per_hour = latest_balances['Quil Per Hour'].sum()
         total_dollar_per_hour = latest_balances['$ Per Hour'].sum()
@@ -160,37 +160,28 @@ def index():
         earnings_per_minute_graph_html = earnings_per_minute_fig.to_html(full_html=False)
 
     else:
-        balance_graph_html = ""
-        quil_minute_graph_html = ""
-        hourly_growth_graph_html = ""
-        earnings_per_hour_graph_html = ""
-        earnings_per_minute_graph_html = ""
-        total_balance = 0  # If no data, set total balance to 0
-        wquil_price = 0  # Default price if fetching fails
-        table_data = []  # Empty table data if no data is found
+        # In case no data is found, render empty or zero values
+        table_data = []
+        total_quil_balance = total_quil_per_minute = total_quil_per_hour = 0
+        total_dollar_per_hour = total_quil_per_day = total_dollar_per_day = 0
 
-        # Set totals to 0 if no data
-        total_quil_balance = 0
-        total_quil_per_minute = 0
-        total_quil_per_hour = 0
-        total_dollar_per_hour = 0
-        total_quil_per_day = 0
-        total_dollar_per_day = 0
+        balance_graph_html = quil_minute_graph_html = hourly_growth_graph_html = ""
+        earnings_per_hour_graph_html = earnings_per_minute_graph_html = ""
 
-    return render_template('index.html', balance_graph_html=balance_graph_html,
-                           quil_minute_graph_html=quil_minute_graph_html,
-                           hourly_growth_graph_html=hourly_growth_graph_html,
-                           earnings_per_hour_graph_html=earnings_per_hour_graph_html,
-                           earnings_per_minute_graph_html=earnings_per_minute_graph_html,
-                           total_balance=total_balance,
-                           wquil_price=wquil_price,
+    return render_template('index.html',
                            table_data=table_data,
-                           total_quil_balance=total_quil_balance,
+                           total_balance=total_quil_balance,
                            total_quil_per_minute=total_quil_per_minute,
                            total_quil_per_hour=total_quil_per_hour,
                            total_dollar_per_hour=total_dollar_per_hour,
                            total_quil_per_day=total_quil_per_day,
                            total_dollar_per_day=total_dollar_per_day,
+                           balance_graph_html=balance_graph_html,
+                           quil_minute_graph_html=quil_minute_graph_html,
+                           hourly_growth_graph_html=hourly_growth_graph_html,
+                           earnings_per_hour_graph_html=earnings_per_hour_graph_html,
+                           earnings_per_minute_graph_html=earnings_per_minute_graph_html,
+                           wquil_price=wquil_price,
                            night_mode=night_mode)
 
 # Route to handle balance data from servers
