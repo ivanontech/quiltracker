@@ -12,9 +12,10 @@
             font-style: normal;
         }
 
+        /* Default Light Mode Styles */
         body {
-            background-color: #000000;
-            color: #FFFFFF;
+            background-color: #f0f0f0; /* Light grey background */
+            color: #333; /* Dark grey text for readability */
             font-family: 'Proxima Nova Alt Bold', Arial, sans-serif;
             margin: 0;
             padding: 20px;
@@ -22,7 +23,7 @@
         }
 
         h1 {
-            color: #9b59b6;
+            color: #005f73; /* Dark teal for headings */
             font-size: 28px;
             margin-bottom: 15px;
         }
@@ -43,7 +44,7 @@
         }
 
         th {
-            background-color: #9b59b6;
+            background-color: #005f73;
             color: white;
         }
 
@@ -101,7 +102,7 @@
         }
 
         input:checked + .slider {
-            background-color: #9b59b6;
+            background-color: #005f73;
         }
 
         input:checked + .slider:before {
@@ -116,43 +117,42 @@
             border-radius: 50%;
         }
 
+        /* Night Mode */
+        body.night-mode {
+            background-color: #000;
+            color: #fff;
+        }
+
+        body.night-mode h1 {
+            color: #9b59b6;
+        }
+
+        body.night-mode th {
+            background-color: #9b59b6;
+        }
+
+        footer.night-mode {
+            color: #666;
+        }
+
     </style>
     <script>
-        // Set a timer to refresh the page every 75 seconds, unless auto-refresh is turned off
-        let autoRefresh = true;
-
-        function toggleRefresh() {
-            autoRefresh = !autoRefresh;
-        }
-
-        function refreshPage() {
-            if (autoRefresh) {
-                window.location.reload();
-            }
-        }
-
-        setInterval(refreshPage, 75000);  // 75 seconds in milliseconds
-
-        function loadCustomNodeNames() {
-            const nodes = document.querySelectorAll('.node-input');
-            nodes.forEach(node => {
-                const storedName = localStorage.getItem(node.id);
-                if (storedName) {
-                    node.value = storedName;
-                }
-                node.addEventListener('input', (e) => {
-                    localStorage.setItem(e.target.id, e.target.value);
-                });
-            });
-        }
-
         function toggleNightMode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const nightMode = urlParams.get('night_mode') === 'on' ? 'off' : 'on';
+            const body = document.body;
+            body.classList.toggle('night-mode');
+            
+            // Update URL for night mode
+            const nightMode = body.classList.contains('night-mode') ? 'on' : 'off';
             window.location.href = `/?night_mode=${nightMode}`;
         }
 
-        document.addEventListener("DOMContentLoaded", loadCustomNodeNames);
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const nightMode = urlParams.get('night_mode');
+            if (nightMode === 'on') {
+                document.body.classList.add('night-mode');
+            }
+        });
     </script>
 </head>
 <body>
@@ -243,8 +243,8 @@
             <p>Buy me a Coffee (Ethereum): <span class="wallet-address">0x705242cF0ec57707ed96163D324e5c1caA9f781C</span></p>
             <p class="solana-address">Solana: <span class="wallet-address">9TiE9BWnkFuhudv39uDZPdpoxzBhKnCWrQ1Qx5iyjuSg</span></p>
         </div>
-        <p>For more information, visit <a href="https://status.quilibrium.com/" style="color: #9b59b6;">Quilibrium Status</a>.</p>
-        <p>Rent amazing servers at <a href="https://www.cherryservers.com/?affiliate=Z912GG75" style="color: #9b59b6;">Cherry Servers</a>.</p>
+        <p>For more information, visit <a href="https://status.quilibrium.com/" style="color: #005f73;">Quilibrium Status</a>.</p>
+        <p>Rent amazing servers at <a href="https://www.cherryservers.com/?affiliate=Z912GG75" style="color: #005f73;">Cherry Servers</a>.</p>
     </footer>
 </body>
 </html>
