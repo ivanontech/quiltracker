@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node Balances and Metrics</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> <!-- Plotly -->
     <style>
         @font-face {
             font-family: 'Proxima Nova Alt Bold';
@@ -140,11 +141,27 @@
         function toggleNightMode() {
             const body = document.body;
             body.classList.toggle('night-mode');
-            
+
             // Update URL for night mode
             const nightMode = body.classList.contains('night-mode') ? 'on' : 'off';
             window.location.href = `/?night_mode=${nightMode}`;
         }
+
+        function toggleRefresh() {
+            // Toggle the refresh functionality if needed
+            window.location.reload();
+        }
+
+        // Automatically refresh the page every 75 seconds if Auto Refresh is on
+        let autoRefresh = true;
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+        }
+        setInterval(() => {
+            if (autoRefresh) {
+                window.location.reload();
+            }
+        }, 75000); // 75 seconds
 
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -173,7 +190,7 @@
 
         <label for="autoRefresh" style="margin-left: 20px;">Auto Refresh</label>
         <label class="switch">
-            <input type="checkbox" id="autoRefresh" checked onclick="toggleRefresh()">
+            <input type="checkbox" id="autoRefresh" checked onclick="toggleAutoRefresh()">
             <span class="slider"></span>
         </label>
     </div>
@@ -188,9 +205,11 @@
                 <th>Quil Balance</th>
                 <th>Quil Per Minute</th>
                 <th>Quil Per Hour</th>
+                <th>Quil Per Day (Live)</th>
                 <th>$ Per Hour</th>
-                <th>Quil Per Day</th>
                 <th>$ Per Day</th>
+                <th>24-Hour Quil Per Day</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
@@ -201,9 +220,11 @@
                 <td>{{ "{:.4f}".format(row['Balance'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
-                <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Day'] | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
                 <td>${{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Day'] | default(0.0)) }}</td>
+                <td>{{ row['Status'] }}</td>
             </tr>
             {% endfor %}
             <!-- Totals row -->
@@ -213,10 +234,12 @@
                 <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
-                <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td> <!-- Added $ sign -->
                 <td>{{ "{:.4f}".format(total_quil_per_day | default(0.0)) }}</td>
-                <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td> <!-- Added $ sign -->
-             </tr>
+                <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
+                <td></td>
+            </tr>
         </tbody>
     </table>
 
@@ -227,14 +250,11 @@
     <h1>Quil Earned Per Minute</h1>
     <div>{{ quil_minute_graph_html | safe }}</div>
 
-    <h1>Hourly Growth in Quil</h1>
-    <div>{{ hourly_growth_graph_html | safe }}</div>
-
-    <h1>Earnings in USD per Hour</h1>
+    <h1>Earnings Per Hour in USD</h1>
     <div>{{ earnings_per_hour_graph_html | safe }}</div>
 
-    <h1>Earnings in USD per Minute</h1>
-    <div>{{ earnings_per_minute_graph_html | safe }}</div>
+    <h1>Hourly Growth in Quil</h1>
+    <div>{{ hourly_growth_graph_html | safe }}</div>
 
     <!-- Footer with wallet details -->
     <footer>
