@@ -207,10 +207,10 @@
                 <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
-                <td>{{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>  <!-- Corrected -->
+                <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td> <!-- Added $ sign -->
                 <td>{{ "{:.4f}".format(total_quil_per_day | default(0.0)) }}</td>
-                <td>{{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>  <!-- Corrected -->
-            </tr>
+                <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td> <!-- Added $ sign -->
+             </tr>
         </tbody>
     </table>
 
