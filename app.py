@@ -41,7 +41,7 @@ def compute_metrics(df, wquil_price):
     df['Hour'] = df['Date'].dt.floor('h')
     hourly_growth = df.groupby(['Peer ID', 'Hour'])['Balance'].last().reset_index()
     hourly_growth['Growth'] = hourly_growth.groupby('Peer ID')['Balance'].diff().fillna(0)
-    
+
     # Use the second-to-last hour's data for Quil per hour
     second_to_last_hour = hourly_growth.groupby('Peer ID').tail(2).groupby('Peer ID').head(1)
 
@@ -60,7 +60,6 @@ def compute_metrics(df, wquil_price):
     df = pd.merge(df, second_to_last_hour[['Peer ID', 'Quil_Per_Hour']], on='Peer ID', how='left')
 
     return df, second_to_last_hour
-
 
 @app.route('/')
 def index():
@@ -93,14 +92,14 @@ def index():
         combined_df, hourly_growth_df = compute_metrics(combined_df, wquil_price)
 
         # Calculate the total balance across all Peer IDs
-        total_quil_balance = round(latest_balances['Balance'].sum(), 4)
+        total_balance = round(latest_balances['Balance'].sum(), 4)
 
         # Calculate Quil per minute and per hour for each Peer ID
-        quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].mean()
-        quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].mean()
-        quil_per_day = combined_df.groupby('Peer ID')['Quil_Per_Day'].mean()
-        dollar_per_hour = combined_df.groupby('Peer ID')['Earnings_Per_Hour'].mean()
-        dollar_per_day = combined_df.groupby('Peer ID')['Earnings_Per_Day'].mean()
+        quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].last()
+        quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].last()
+        quil_per_day = combined_df.groupby('Peer ID')['Quil_Per_Hour'].last() * 24
+        dollar_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].last() * wquil_price
+        dollar_per_day = dollar_per_hour * 24
 
         latest_balances['Quil Per Minute'] = quil_per_minute.values
         latest_balances['Quil Per Hour'] = quil_per_hour.values
@@ -109,6 +108,7 @@ def index():
         latest_balances['$ Per Day'] = dollar_per_day.values
 
         # Sum for the totals row
+        total_quil_balance = latest_balances['Balance'].sum()
         total_quil_per_minute = latest_balances['Quil Per Minute'].sum()
         total_quil_per_hour = latest_balances['Quil Per Hour'].sum()
         total_dollar_per_hour = latest_balances['$ Per Hour'].sum()
@@ -169,7 +169,6 @@ def index():
         earnings_per_minute_graph_html = earnings_per_minute_fig.to_html(full_html=False)
 
     else:
-        # In case no data is found, render empty or zero values
         table_data = []
         total_quil_balance = total_quil_per_minute = total_quil_per_hour = 0
         total_dollar_per_hour = total_quil_per_day = total_dollar_per_day = 0
@@ -193,19 +192,15 @@ def index():
                            wquil_price=wquil_price,
                            night_mode=night_mode)
 
+
 # Route to handle balance data from servers
 @app.route('/update_balance', methods=['POST'])
 def update_balance():
     try:
-        # Log the raw request data for debugging
         data = request.get_json()
-        print(f"Received data: {data}")
-
-        # Check if data is valid
         if not data:
             return 'No data received', 400
 
-        # Prepare data to append to a CSV file
         peer_id = data.get('peer_id')
         balance = data.get('balance')
         timestamp = data.get('timestamp')
@@ -215,7 +210,6 @@ def update_balance():
 
         log_file = os.path.join(CSV_DIRECTORY, f'node_balance_{peer_id}.csv')
 
-        # Append the data to the corresponding CSV file
         if not os.path.exists(log_file):
             with open(log_file, 'w') as f:
                 f.write('Date,Peer ID,Balance\n')
@@ -223,12 +217,12 @@ def update_balance():
         with open(log_file, 'a') as f:
             f.write(f'{timestamp},{peer_id},{balance}\n')
 
-        print(f"Logged data for Peer ID {peer_id}: Balance {balance} at {timestamp}")
         return 'Balance recorded', 200
 
     except Exception as e:
         print(f"Error: {e}")
         return 'Internal Server Error', 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
