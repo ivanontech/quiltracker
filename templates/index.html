@@ -12,9 +12,9 @@
             font-style: normal;
         }
 
-        body {
-            background-color: #f0f0f0;
-            color: #333;
+        body { 
+            background-color: #000000;
+            color: #FFFFFF;
             font-family: 'Proxima Nova Alt Bold', Arial, sans-serif;
             margin: 0;
             padding: 20px;
@@ -22,7 +22,7 @@
         }
 
         h1 {
-            color: #005f73;
+            color: #9b59b6;
             font-size: 28px;
             margin-bottom: 15px;
         }
@@ -43,7 +43,7 @@
         }
 
         th {
-            background-color: #005f73;
+            background-color: #9b59b6;
             color: white;
         }
 
@@ -65,12 +65,73 @@
             margin: 10px 0;
         }
 
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #9b59b6;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
     </style>
     <script>
-        // Set a timer to refresh the page every 75 seconds
-        setTimeout(function(){
-            window.location.reload(1);
-        }, 75000);  // 75 seconds in milliseconds
+        // Set a timer to refresh the page every 75 seconds, unless auto-refresh is turned off
+        let autoRefresh = true;
+
+        function toggleRefresh() {
+            autoRefresh = !autoRefresh;
+        }
+
+        function refreshPage() {
+            if (autoRefresh) {
+                window.location.reload();
+            }
+        }
+
+        setInterval(refreshPage, 75000);  // 75 seconds in milliseconds
 
         function loadCustomNodeNames() {
             const nodes = document.querySelectorAll('.node-input');
@@ -96,6 +157,21 @@
     <h1>Current wQUIL Price</h1>
     <p>Price in USD: ${{ wquil_price }}</p>
 
+    <!-- Night Mode and Auto-Refresh Switches -->
+    <div style="text-align: right; margin-bottom: 20px;">
+        <label for="nightMode">Night Mode</label>
+        <label class="switch">
+            <input type="checkbox" id="nightMode">
+            <span class="slider"></span>
+        </label>
+
+        <label for="autoRefresh" style="margin-left: 20px;">Auto Refresh</label>
+        <label class="switch">
+            <input type="checkbox" id="autoRefresh" checked onclick="toggleRefresh()">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <!-- Display Node Statistics table -->
     <h1>Node Statistics</h1>
     <table>
@@ -106,7 +182,9 @@
                 <th>Quil Balance</th>
                 <th>Quil Per Minute</th>
                 <th>Quil Per Hour</th>
-                <th>$ Per Hour</th> <!-- Added $ Per Hour -->
+                <th>$ Per Hour</th>
+                <th>Quil Per Day</th>
+                <th>$ Per Day</th>
             </tr>
         </thead>
         <tbody>
@@ -114,20 +192,24 @@
             <tr>
                 <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td>
                 <td>{{ row['Peer ID'] }}</td>
-                <td>{{ row['Balance'] }}</td>
-                <td>{{ row['Quil Per Minute'] }}</td>
-                <td>{{ row['Quil Per Hour'] }}</td>
-                <td>${{ (row['Quil Per Hour'] * wquil_price) | round(6) }}</td>
+                <td>{{ "{:.4f}".format(row['Balance'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['Quil Per Day'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
             </tr>
             {% endfor %}
-            <!-- Totals Row -->
-            <tr style="font-weight: bold;">
+            <!-- Totals row -->
+            <tr>
                 <td>Total</td>
-                <td></td> <!-- Empty column for Peer ID -->
-                <td>{{ total_balance | round(6) }}</td>
-                <td>{{ total_quil_per_minute | round(6) }}</td>
-                <td>{{ total_quil_per_hour | round(6) }}</td>
-                <td>${{ total_dollars_per_hour | round(6) }}</td> <!-- Total $ per hour -->
+                <td></td>
+                <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>  <!-- Corrected -->
+                <td>{{ "{:.4f}".format(total_quil_per_day | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>  <!-- Corrected -->
             </tr>
         </tbody>
     </table>
@@ -155,7 +237,8 @@
             <p>Buy me a Coffee (Ethereum): <span class="wallet-address">0x705242cF0ec57707ed96163D324e5c1caA9f781C</span></p>
             <p class="solana-address">Solana: <span class="wallet-address">9TiE9BWnkFuhudv39uDZPdpoxzBhKnCWrQ1Qx5iyjuSg</span></p>
         </div>
-        <p>For more information, visit <a href="https://status.quilibrium.com/">Quilibrium Status</a>.</p>
+        <p>For more information, visit <a href="https://status.quilibrium.com/" style="color: #9b59b6;">Quilibrium Status</a>.</p>
+        <p>Rent amazing servers at <a href="https://www.cherryservers.com/?affiliate=Z912GG75" style="color: #9b59b6;">Cherry Servers</a>.</p>
     </footer>
 </body>
 </html>
