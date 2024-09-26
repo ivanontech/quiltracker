@@ -37,6 +37,9 @@ def compute_metrics(df, wquil_price):
     # Calculate Quil per hour (60 * Quil per minute)
     df['Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60
 
+    # Calculate Quil per day (24 * Quil per hour)
+    df['Quil_Per_Day'] = df['Quil_Per_Hour'] * 24
+
     # Calculate cumulative growth per hour
     df['Hour'] = df['Date'].dt.floor('h')
     hourly_growth = df.groupby(['Peer ID', 'Hour'])['Balance'].last().reset_index()
@@ -45,6 +48,8 @@ def compute_metrics(df, wquil_price):
     # Calculate earnings in USD
     hourly_growth['Earnings_USD'] = hourly_growth['Growth'] * wquil_price
     df['Earnings_Per_Minute'] = df['Quil_Per_Minute'] * wquil_price
+    df['Earnings_Per_Hour'] = df['Quil_Per_Hour'] * wquil_price
+    df['Earnings_Per_Day'] = df['Quil_Per_Day'] * wquil_price
 
     return df, hourly_growth
 
@@ -52,6 +57,7 @@ def compute_metrics(df, wquil_price):
 def index():
     wquil_price = get_wquil_price()  # Fetch the current price of wQUIL
     data_frames = []
+    night_mode = request.args.get('night_mode', 'off')  # Get night mode from query parameter
 
     # Read and combine all CSV files
     for file_name in os.listdir(CSV_DIRECTORY):
@@ -77,22 +83,33 @@ def index():
         # Compute Quil earned per minute and hour
         combined_df, hourly_growth_df = compute_metrics(combined_df, wquil_price)
 
-        # Calculate Quil per minute and per hour for each Peer ID
-        quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].mean()
-        quil_per_hour = combined_df.groupby('Peer ID')['Quil_Per_Hour'].mean()
-        latest_balances['Quil Per Minute'] = quil_per_minute.values
-        latest_balances['Quil Per Hour'] = quil_per_hour.values
+        # Calculate the total balance across all Peer IDs
+        total_balance = round(latest_balances['Balance'].sum(), 4)
+
+        # Calculate Quil per minute for the most recent minute of data
+        last_minute_df = combined_df.groupby('Peer ID').last().reset_index()
+
+        # Calculate Quil per hour using the second-to-last hour
+        second_to_last_hour_df = combined_df.groupby('Peer ID').nth(-2).reset_index()
+
+        latest_balances['Quil Per Minute'] = last_minute_df['Quil_Per_Minute'].values
+        latest_balances['Quil Per Hour'] = second_to_last_hour_df['Quil_Per_Hour'].values
+        latest_balances['Quil Per Day'] = latest_balances['Quil Per Hour'] * 24
+        latest_balances['$ Per Hour'] = latest_balances['Quil Per Hour'] * wquil_price
+        latest_balances['$ Per Day'] = latest_balances['Quil Per Day'] * wquil_price
+
+        # Sum for the totals row
+        total_quil_balance = latest_balances['Balance'].sum()
+        total_quil_per_minute = latest_balances['Quil Per Minute'].sum()
+        total_quil_per_hour = latest_balances['Quil Per Hour'].sum()
+        total_dollar_per_hour = latest_balances['$ Per Hour'].sum()
+        total_quil_per_day = latest_balances['Quil Per Day'].sum()
+        total_dollar_per_day = latest_balances['$ Per Day'].sum()
 
         # Data for the table (with Quil Per Hour and Quil Per Minute)
-        table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Minute', 'Quil Per Hour']]
+        table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Minute', 'Quil Per Hour', '$ Per Hour', 'Quil Per Day', '$ Per Day']]
 
-        # Calculate total values
-        total_quil_balance = table_data['Balance'].sum()
-        total_quil_per_minute = table_data['Quil Per Minute'].sum()
-        total_quil_per_hour = table_data['Quil Per Hour'].sum()
-        total_dollars_per_hour = (table_data['Quil Per Hour'] * wquil_price).sum()
-
-        # Convert table data to list of dictionaries for easy templating
+        # Convert to list of dictionaries for easy templating
         table_data = table_data.to_dict(orient='records')
 
         # Plot: Node Balances Over Time
@@ -125,6 +142,16 @@ def index():
                                           labels={'Earnings_Per_Minute': 'Earnings (USD/Min)', 'Date': 'Date'},
                                           hover_data={'Peer ID': True, 'Earnings_Per_Minute': True})
 
+        # Set theme based on night mode
+        chart_template = 'plotly_dark' if night_mode == 'on' else 'plotly'
+
+        # Apply the theme to all charts
+        balance_fig.update_layout(template=chart_template)
+        quil_per_minute_fig.update_layout(template=chart_template)
+        hourly_growth_fig.update_layout(template=chart_template)
+        earnings_per_hour_fig.update_layout(template=chart_template)
+        earnings_per_minute_fig.update_layout(template=chart_template)
+
         # Convert Plotly figures to HTML for rendering
         balance_graph_html = balance_fig.to_html(full_html=False)
         quil_minute_graph_html = quil_per_minute_fig.to_html(full_html=False)
@@ -138,23 +165,33 @@ def index():
         hourly_growth_graph_html = ""
         earnings_per_hour_graph_html = ""
         earnings_per_minute_graph_html = ""
+        total_balance = 0  # If no data, set total balance to 0
+        wquil_price = 0  # Default price if fetching fails
+        table_data = []  # Empty table data if no data is found
+
+        # Set totals to 0 if no data
         total_quil_balance = 0
         total_quil_per_minute = 0
         total_quil_per_hour = 0
-        total_dollars_per_hour = 0
-        table_data = []
+        total_dollar_per_hour = 0
+        total_quil_per_day = 0
+        total_dollar_per_day = 0
 
     return render_template('index.html', balance_graph_html=balance_graph_html,
                            quil_minute_graph_html=quil_minute_graph_html,
                            hourly_growth_graph_html=hourly_growth_graph_html,
                            earnings_per_hour_graph_html=earnings_per_hour_graph_html,
                            earnings_per_minute_graph_html=earnings_per_minute_graph_html,
-                           total_balance=total_quil_balance,
+                           total_balance=total_balance,
+                           wquil_price=wquil_price,
+                           table_data=table_data,
+                           total_quil_balance=total_quil_balance,
                            total_quil_per_minute=total_quil_per_minute,
                            total_quil_per_hour=total_quil_per_hour,
-                           total_dollars_per_hour=total_dollars_per_hour,
-                           wquil_price=wquil_price,
-                           table_data=table_data)
+                           total_dollar_per_hour=total_dollar_per_hour,
+                           total_quil_per_day=total_quil_per_day,
+                           total_dollar_per_day=total_dollar_per_day,
+                           night_mode=night_mode)
 
 # Route to handle balance data from servers
 @app.route('/update_balance', methods=['POST'])
@@ -192,7 +229,6 @@ def update_balance():
     except Exception as e:
         print(f"Error: {e}")
         return 'Internal Server Error', 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
