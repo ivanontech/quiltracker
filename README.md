@@ -8,7 +8,7 @@ Instructions:
 4. Put track_balances.sh on all your miners you wish to track
 5. Set up a cronjob on your miners to run every minute to grab your node peer ID and balances from track_balances.sh
     1. crontab -e
-    2. * * * * * /root/track_balances.sh ![image](https://github.com/user-attachments/assets/70e2eb34-b5bd-4ffb-8804-661c1fd600a0)
+    2. * * * * * /root/quiltracker/track_balances.sh ![image](https://github.com/user-attachments/assets/70e2eb34-b5bd-4ffb-8804-661c1fd600a0)
 
 6. Visit http://yourip:5000 to access the dashboard.
 7. Enjoy, Quil and Chill
