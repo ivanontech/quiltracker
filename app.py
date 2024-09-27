@@ -38,9 +38,10 @@ def compute_metrics(df, wquil_price):
     df = df.loc[df['Time_Diff_Minutes'] < 120]  # Filtering out differences larger than 120 minutes
 
     # Calculate Quil per hour
-    df.loc[:, 'Time_Diff_Hours'] = df['Time_Diff_Minutes'] / 60
-    df.loc[:, 'Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60  # Conversion to hours
-    df.loc[:, 'Earnings_Per_Hour'] = df['Quil_Per_Hour'] * wquil_price
+    df['Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60  # Conversion to hours
+
+    # Calculate earnings per hour in USD
+    df['Earnings_Per_Hour'] = df['Quil_Per_Hour'] * wquil_price
 
     # Calculate hourly growth by grouping by 'Hour' and 'Peer ID'
     df['Hour'] = df['Date'].dt.floor('h')
@@ -74,37 +75,22 @@ def calculate_last_24_hours(df):
     
     return last_24h_quil_per_day
 
-# New route to handle balance updates
-@app.route('/update_balance', methods=['POST'])
-def update_balance():
-    try:
-        data = request.get_json()
-        if not data:
-            return 'No data received', 400
+# New function to calculate 24-hour Quil Per Hour
+def calculate_last_24_hours_quil_per_hour(df):
+    df['Date'] = pd.to_datetime(df['Date'])
+    current_time = df['Date'].max()  # Get the latest timestamp
+    start_time = current_time - timedelta(hours=24)
+    
+    # Filter for data in the past 24 hours
+    df_last_24_hours = df[df['Date'] >= start_time].copy()
 
-        peer_id = data.get('peer_id')
-        balance = data.get('balance')
-        timestamp = data.get('timestamp')
+    # Calculate the balance difference in the last 24 hours for each Peer ID
+    last_24h_quil_per_hour = df_last_24_hours.groupby('Peer ID')['Balance'].last() - df_last_24_hours.groupby('Peer ID')['Balance'].first()
 
-        if not peer_id or not balance or not timestamp:
-            return 'Missing required fields', 400
-
-        log_file = os.path.join(CSV_DIRECTORY, f'node_balance_{peer_id}.csv')
-
-        # Check if the file exists, if not, create it and add headers
-        if not os.path.exists(log_file):
-            with open(log_file, 'w') as f:
-                f.write('Date,Peer ID,Balance\n')
-
-        # Append the new balance data with timestamp
-        with open(log_file, 'a') as f:
-            f.write(f'{timestamp},{peer_id},{balance}\n')
-
-        return 'Balance recorded', 200
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return 'Internal Server Error', 500
+    # Divide by 24 to get the per-hour average
+    last_24h_quil_per_hour = last_24h_quil_per_hour / 24
+    
+    return last_24h_quil_per_hour
 
 @app.route('/')
 def index():
@@ -146,15 +132,18 @@ def index():
         last_24_hours_quil_per_day = calculate_last_24_hours(combined_df)
         latest_balances['24-Hour Quil Per Day'] = last_24_hours_quil_per_day.fillna('').values  # If NaN, it defaults to an empty string
 
+        # Add 24-Hour Quil Per Hour calculation
+        last_24_hours_quil_per_hour = calculate_last_24_hours_quil_per_hour(combined_df)
+        latest_balances['24-Hour Quil Per Hour'] = last_24_hours_quil_per_hour.fillna('').values  # If NaN, it defaults to an empty string
+
         # Calculate Quil per minute, per hour, and per day for each Peer ID
         quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].last()
         quil_per_hour = hourly_growth_df.groupby('Peer ID')['Quil_Per_Hour'].last()
         quil_per_day = hourly_growth_df.groupby('Peer ID')['Rolling_Quil_Per_Day'].last()
-        dollar_per_hour = hourly_growth_df.groupby('Peer ID')['Earnings_USD'].last()
-        dollar_per_day = hourly_growth_df.groupby('Peer ID')['Rolling_Earnings_Per_Day'].last()
 
-        # Calculate last 24 hours of Quil earned
-        last_24_hours_quil_per_day = calculate_last_24_hours(combined_df)
+        # Calculate dollar amounts based on 24-hour Quil Per Hour
+        dollar_per_hour = latest_balances['24-Hour Quil Per Hour'] * wquil_price
+        dollar_per_day = latest_balances['24-Hour Quil Per Day'] * wquil_price
 
         # Determine the status (Overperforming, Underperforming, On Track)
         status = []
@@ -173,7 +162,6 @@ def index():
         latest_balances['Quil Per Day'] = quil_per_day.values
         latest_balances['$ Per Hour'] = dollar_per_hour.values
         latest_balances['$ Per Day'] = dollar_per_day.values
-        latest_balances['24-Hour Quil Per Day'] = last_24_hours_quil_per_day.values
         latest_balances['Status'] = status  # Add status column
 
         # Sort by Quil Per Day in descending order
@@ -183,12 +171,14 @@ def index():
         total_quil_balance = latest_balances['Balance'].sum()
         total_quil_per_minute = latest_balances['Quil Per Minute'].sum()
         total_quil_per_hour = latest_balances['Quil Per Hour'].sum()
+        total_24_hour_quil_per_hour = latest_balances['24-Hour Quil Per Hour'].sum()
         total_dollar_per_hour = latest_balances['$ Per Hour'].sum()
         total_quil_per_day = latest_balances['Quil Per Day'].sum()
+        total_24_hour_quil_per_day = latest_balances['24-Hour Quil Per Day'].sum()
         total_dollar_per_day = latest_balances['$ Per Day'].sum()
 
         # Data for the table (with Quil Per Hour, Quil Per Minute, Quil Per Day, and Status)
-        table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '$ Per Hour', '$ Per Day', '24-Hour Quil Per Day', 'Status']]
+        table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day', 'Status']]
 
         # Convert to list of dictionaries for easy templating
         table_data = table_data.to_dict(orient='records')
@@ -234,8 +224,8 @@ def index():
 
     else:
         table_data = []
-        total_quil_balance = total_quil_per_minute = total_quil_per_hour = 0
-        total_dollar_per_hour = total_quil_per_day = total_dollar_per_day = 0
+        total_quil_balance = total_quil_per_minute = total_quil_per_hour = total_24_hour_quil_per_hour = 0
+        total_dollar_per_hour = total_quil_per_day = total_24_hour_quil_per_day = total_dollar_per_day = 0
 
         balance_graph_html = quil_minute_graph_html = hourly_growth_graph_html = ""
         earnings_per_hour_graph_html = ""
@@ -245,8 +235,10 @@ def index():
                            total_balance=total_quil_balance,
                            total_quil_per_minute=total_quil_per_minute,
                            total_quil_per_hour=total_quil_per_hour,
+                           total_24_hour_quil_per_hour=total_24_hour_quil_per_hour,
                            total_dollar_per_hour=total_dollar_per_hour,
                            total_quil_per_day=total_quil_per_day,
+                           total_24_hour_quil_per_day=total_24_hour_quil_per_day,
                            total_dollar_per_day=total_dollar_per_day,
                            balance_graph_html=balance_graph_html,
                            quil_minute_graph_html=quil_minute_graph_html,
@@ -254,6 +246,7 @@ def index():
                            earnings_per_hour_graph_html=earnings_per_hour_graph_html,
                            wquil_price=wquil_price,
                            night_mode=night_mode)
+
 
 
 if __name__ == '__main__':
