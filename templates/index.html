@@ -16,10 +16,13 @@
             text-align: center;
         }
 
-        h1 {
-            color: #005f73; /* Dark teal for headings */
-            font-size: 28px;
-            margin-bottom: 15px;
+        /* Blue Gradient Text Style */
+        .gradient-text {
+            font-size: 36px; /* Adjust size as needed */
+            font-weight: bold;
+            background: linear-gradient(90deg, #42275a, #734b6d, #734b6d); /* Blue gradient colors */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         table {
@@ -38,7 +41,7 @@
         }
 
         th {
-            background-color: #005f73;
+            background-color: #42275a; /* Blue color to match gradient */
             color: white;
         }
 
@@ -96,7 +99,7 @@
         }
 
         input:checked + .slider {
-            background-color: #005f73;
+            background-color: #42275a; /* Blue color to match the gradient */
         }
 
         input:checked + .slider:before {
@@ -117,12 +120,15 @@
             color: #fff;
         }
 
-        body.night-mode h1 {
-            color: #9b59b6;
+        /* Apply Gradient to Headers in Night Mode */
+        body.night-mode .gradient-text {
+            background: linear-gradient(90deg, #42275a, #734b6d, #734b6d); /* Keep blue gradient in night mode */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         body.night-mode th {
-            background-color: #9b59b6;
+            background-color: #42275a; /* Blue for night mode headers */
         }
 
         footer.night-mode {
@@ -165,11 +171,10 @@
     </script>
 </head>
 <body>
-    <!-- Display the total balance of all peers -->
-    <h1>Total Quil Across All Peers: {{ total_balance }} Quil</h1>
+    <!-- Apply Blue Gradient Text to All Relevant Headings -->
+    <h1 class="gradient-text">Total Quil Across All Peers: {{ total_balance }} Quil</h1>
 
-    <!-- Display the current wQUIL price -->
-    <h1>Current wQUIL Price</h1>
+    <h1 class="gradient-text">Current wQUIL Price</h1>
     <p>Price in USD: ${{ wquil_price }}</p>
 
     <!-- Night Mode and Auto-Refresh Switches -->
@@ -177,18 +182,18 @@
         <label for="nightMode">Night Mode</label>
         <label class="switch">
             <input type="checkbox" id="nightMode" {% if night_mode == 'on' %}checked{% endif %} onclick="toggleNightMode()">
-            <span class="slider"></span>
+            <span class="slider round"></span>
         </label>
 
         <label for="autoRefresh" style="margin-left: 20px;">Auto Refresh</label>
         <label class="switch">
             <input type="checkbox" id="autoRefresh" checked onclick="toggleAutoRefresh()">
-            <span class="slider"></span>
+            <span class="slider round"></span>
         </label>
     </div>
 
     <!-- Display Node Statistics table -->
-    <h1>Node Statistics</h1>
+    <h1 class="gradient-text">Node Statistics</h1>
     <table>
         <thead>
             <tr>
@@ -236,16 +241,16 @@
     </table>
 
     <!-- Display the interactive Plotly charts -->
-    <h1>Node Balances Over Time</h1>
+    <h1 class="gradient-text">Node Balances Over Time</h1>
     <div>{{ balance_graph_html | safe }}</div>
 
-    <h1>Quil Earned Per Minute</h1>
+    <h1 class="gradient-text">Quil Earned Per Minute</h1>
     <div>{{ quil_minute_graph_html | safe }}</div>
 
-    <h1>Earnings Per Hour in USD</h1>
+    <h1 class="gradient-text">Earnings Per Hour in USD</h1>
     <div>{{ earnings_per_hour_graph_html | safe }}</div>
 
-    <h1>Hourly Growth in Quil</h1>
+    <h1 class="gradient-text">Hourly Growth in Quil</h1>
     <div>{{ hourly_growth_graph_html | safe }}</div>
 
     <!-- Footer with wallet details -->
