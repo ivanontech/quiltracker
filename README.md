@@ -13,4 +13,5 @@ Instructions:
 6. Visit http://yourip:5000 to access the dashboard.
 7. Enjoy, Quil and Chill
 
+Note if this node appears in your table use: rm /root/quiltracker/node_balance_QmdNZ8Y2YGmv9yfehNZLHs21uFEfFsjq3HfGomVfKAgybb.csv 
                
