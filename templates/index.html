@@ -174,8 +174,7 @@
     <!-- Apply Blue Gradient Text to All Relevant Headings -->
     <h1 class="gradient-text">Total Quil Across All Peers: {{ total_balance }} Quil</h1>
 
-    <h1 class="gradient-text">Current wQUIL Price</h1>
-    <p>Price in USD: ${{ wquil_price }}</p>
+    <h1 class="gradient-text">Current wQUIL Price: ${{ "{:.4f}".format(wquil_price) }}</h1>
 
     <!-- Night Mode and Auto-Refresh Switches -->
     <div style="text-align: right; margin-bottom: 20px;">
@@ -197,7 +196,7 @@
     <table>
         <thead>
             <tr>
-                <th>Node</th>
+                <th style="width: 5%;">Node</th> <!-- Reduced width of Node column -->
                 <th>Peer ID</th>
                 <th>Quil Balance</th>
                 <th>Quil Per Minute</th>
