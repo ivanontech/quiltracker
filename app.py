@@ -47,13 +47,13 @@ def compute_metrics(df, wquil_price):
     df = df.loc[df['Time_Diff_Minutes'] < 120]  # Filtering out differences larger than 120 minutes
 
     # Calculate Quil per hour
-    df['Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60  # Conversion to hours
+    df.loc[:, 'Quil_Per_Hour'] = df['Quil_Per_Minute'] * 60  # Conversion to hours
 
     # Calculate earnings per hour in USD
-    df['Earnings_Per_Hour'] = df['Quil_Per_Hour'] * wquil_price
+    df.loc[:, 'Earnings_Per_Hour'] = df['Quil_Per_Hour'] * wquil_price
 
     # Calculate hourly growth by grouping by 'Hour' and 'Peer ID'
-    df['Hour'] = df['Date'].dt.floor('h')
+    df.loc[:, 'Hour'] = df['Date'].dt.floor('h')
     hourly_growth = df.groupby(['Peer ID', 'Hour'])['Balance'].last().reset_index()
     hourly_growth['Growth'] = hourly_growth.groupby('Peer ID')['Balance'].diff().fillna(0)
 
@@ -74,9 +74,9 @@ def calculate_rolling_sum(hourly_growth_df, hours=24):
 def calculate_last_24_hours(df):
     df['Date'] = pd.to_datetime(df['Date'])
     current_time = df['Date'].max()  # Get the latest timestamp
-    start_time = current_time - timedelta(hours=25)  # Capture 25 hours instead of 24 for precision
+    start_time = current_time - timedelta(hours=24)
 
-    # Filter for data in the past 25 hours
+    # Filter for data in the past 24 hours
     df_last_24_hours = df[df['Date'] >= start_time].copy()
 
     # Calculate the balance difference in the last 24 hours for each Peer ID
@@ -149,8 +149,10 @@ def index():
             print(f"Reading CSV file: {file_path}")
             df = pd.read_csv(file_path)
 
-            # Ensure 'Balance' is numeric, filter out non-numeric values
-            df['Balance'] = pd.to_numeric(df['Balance'], errors='coerce')
+            # Ensure 'Balance' is converted to string before replacing and then back to numeric
+            df['Balance'] = df['Balance'].astype(str)  # Convert balance to string
+            df['Balance'] = df['Balance'].str.replace('Unclaimed balance:', '').str.strip()  # Clean the balance string
+            df['Balance'] = pd.to_numeric(df['Balance'], errors='coerce')  # Convert back to numeric
             df = df.dropna(subset=['Balance'])  # Drop rows where Balance is NaN
 
             data_frames.append(df)
