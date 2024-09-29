@@ -101,35 +101,6 @@ def calculate_last_24_hours_quil_per_hour(df):
 
     return last_24h_quil_per_hour
 
-# Route to update balance data
-@app.route('/update_balance', methods=['POST'])
-def update_balance():
-    try:
-        data = request.get_json()
-        print(f"Received data: {data}")
-
-        if not data or 'peer_id' not in data or 'balance' not in data or 'timestamp' not in data:
-            return 'Invalid data', 400
-
-        peer_id = data['peer_id']
-        balance = data['balance']
-        timestamp = data['timestamp']
-
-        log_file = os.path.join(CSV_DIRECTORY, f'node_balance_{peer_id}.csv')
-
-        if not os.path.exists(log_file):
-            with open(log_file, 'w') as f:
-                f.write('Date,Peer ID,Balance\n')
-
-        with open(log_file, 'a') as f:
-            f.write(f'{timestamp},{peer_id},{balance}\n')
-
-        print(f"Logged balance for {peer_id}: {balance} at {timestamp}")
-        return 'Balance updated', 200
-    except Exception as e:
-        print(f"Error updating balance: {e}")
-        return 'Internal Server Error', 500
-
 # Main dashboard route
 @app.route('/')
 def index():
@@ -144,8 +115,9 @@ def index():
             print(f"Reading CSV file: {file_path}")
             df = pd.read_csv(file_path)
 
-            if df['Balance'].dtype == 'object':
-                df['Balance'] = df['Balance'].str.extract(r'([\d\.]+)').astype(float)
+            # Ensure 'Balance' is numeric and filter out rows with missing balances
+            df['Balance'] = pd.to_numeric(df['Balance'], errors='coerce')
+            df = df.dropna(subset=['Balance'])  # Drop rows where Balance is NaN
 
             data_frames.append(df)
 
@@ -158,6 +130,18 @@ def index():
         # Remove duplicates and keep only the most recent balance for each Peer ID
         latest_balances = combined_df.groupby('Peer ID').last().reset_index()
 
+        # Calculate the 24-hour Quil Per Hour, ensuring the column is created
+        last_24_hours_quil_per_hour = calculate_last_24_hours_quil_per_hour(combined_df)
+
+        # Align the indices of last_24_hours_quil_per_hour with latest_balances to avoid length mismatch
+        last_24_hours_quil_per_hour = last_24_hours_quil_per_hour.reindex(latest_balances['Peer ID']).fillna(0)
+
+        # Assign the aligned values to '24-Hour Quil Per Hour'
+        latest_balances['24-Hour Quil Per Hour'] = last_24_hours_quil_per_hour.values
+
+        # Ensure '24-Hour Quil Per Hour' is numeric and handle non-numeric values
+        latest_balances['24-Hour Quil Per Hour'] = pd.to_numeric(latest_balances['24-Hour Quil Per Hour'], errors='coerce').fillna(0)
+
         # Compute Quil earned per minute and hour
         combined_df, hourly_growth_df = compute_metrics(combined_df, wquil_price)
 
@@ -166,10 +150,7 @@ def index():
 
         latest_balances['Balance'] = latest_balances['Balance'].fillna('')
         last_24_hours_quil_per_day = calculate_last_24_hours(combined_df)
-        latest_balances['24-Hour Quil Per Day'] = last_24_hours_quil_per_day.fillna('').values
-
-        last_24_hours_quil_per_hour = calculate_last_24_hours_quil_per_hour(combined_df)
-        latest_balances['24-Hour Quil Per Hour'] = last_24_hours_quil_per_hour.fillna('').values
+        latest_balances['24-Hour Quil Per Day'] = last_24_hours_quil_per_day.reindex(latest_balances['Peer ID']).fillna(0).values
 
         quil_per_minute = combined_df.groupby('Peer ID')['Quil_Per_Minute'].last()
         quil_per_hour = hourly_growth_df.groupby('Peer ID')['Quil_Per_Hour'].last()
