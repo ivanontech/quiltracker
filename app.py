@@ -166,6 +166,11 @@ def index():
         last_24_hours_quil_per_day = calculate_last_24_hours(combined_df)
         last_24_hours_quil_per_hour = calculate_last_24_hours_quil_per_hour(combined_df)
 
+        # Fix: Reindex to match lengths of latest_balances and last_24_hours data
+        latest_balances = latest_balances.set_index('Peer ID')
+        last_24_hours_quil_per_day = last_24_hours_quil_per_day.reindex(latest_balances.index)
+        last_24_hours_quil_per_hour = last_24_hours_quil_per_hour.reindex(latest_balances.index)
+
         # Add 24-Hour Quil Per Hour and 24-Hour Quil Per Day to latest_balances
         latest_balances['24-Hour Quil Per Day'] = last_24_hours_quil_per_day.fillna(0).values
         latest_balances['24-Hour Quil Per Hour'] = last_24_hours_quil_per_hour.fillna(0).values
@@ -179,6 +184,11 @@ def index():
         quil_per_hour = hourly_growth_df.groupby('Peer ID')['Quil_Per_Hour'].last()
         quil_per_day = hourly_growth_df.groupby('Peer ID')['Rolling_Quil_Per_Day'].last()
 
+        # Reindex to align with latest_balances and fill missing values
+        quil_per_minute = quil_per_minute.reindex(latest_balances.index).fillna(0)
+        quil_per_hour = quil_per_hour.reindex(latest_balances.index).fillna(0)
+        quil_per_day = quil_per_day.reindex(latest_balances.index).fillna(0)
+
         # Calculate dollar amounts based on 24-hour Quil Per Hour
         dollar_per_hour = latest_balances['24-Hour Quil Per Hour'] * wquil_price
         dollar_per_day = latest_balances['24-Hour Quil Per Day'] * wquil_price
@@ -189,7 +199,7 @@ def index():
 
         # Calculate status for each peer ID
         status = []
-        for peer_id in latest_balances['Peer ID']:
+        for peer_id in latest_balances.index:
             current_quil_per_day = quil_per_day.get(peer_id, 0)
             last_24h_quil = last_24_hours_quil_per_day.get(peer_id, 0)
             if current_quil_per_day > last_24h_quil:
@@ -221,7 +231,7 @@ def index():
         total_dollar_per_day = latest_balances['$ Per Day'].sum()
 
         # Prepare table data for rendering
-        table_data = latest_balances[['Peer ID', 'Balance', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day', 'Status']]
+        table_data = latest_balances[['Balance', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day', 'Status']].reset_index()
         table_data = table_data.to_dict(orient='records')
 
         # Plot: Node Balances Over Time
