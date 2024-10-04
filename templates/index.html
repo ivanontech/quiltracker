@@ -224,7 +224,6 @@
                 <th>Quil Per Minute</th>
                 <th>Quil Per Hour</th>
                 <th>24-Hour Quil Per Hour</th> <!-- Move 24-Hour Quil Per Hour after Quil Per Hour -->
-                <th>Quil Per Day (Live)</th> <!-- Quil Per Day (Live) -->
                 <th>24-Hour Quil Per Day</th> <!-- 24-Hour Quil Per Day -->
                 <th>$ Per Hour</th> <!-- Based on 24-Hour Quil Per Hour -->
                 <th>$ Per Day</th>
@@ -240,7 +239,6 @@
                 <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['24-Hour Quil Per Hour'] | default(0.0)) }}</td> <!-- 24-Hour Quil Per Hour -->
-                <td>{{ "{:.4f}".format(row['Quil Per Day'] | default(0.0)) }}</td> <!-- Quil Per Day (Live) -->
                 <td>{{ "{:.4f}".format(row['24-Hour Quil Per Day'] | default(0.0)) }}</td> <!-- 24-Hour Quil Per Day -->
                 <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td> <!-- Based on 24-Hour Quil Per Hour -->
                 <td>${{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
@@ -255,7 +253,6 @@
                 <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_24_hour_quil_per_hour | default(0.0)) }}</td> <!-- Total 24-Hour Quil Per Hour -->
-                <td>{{ "{:.4f}".format(total_quil_per_day | default(0.0)) }}</td> <!-- Total Quil Per Day -->
                 <td>{{ "{:.4f}".format(total_24_hour_quil_per_day | default(0.0)) }}</td> <!-- Total 24-Hour Quil Per Day -->
                 <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>
                 <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>
