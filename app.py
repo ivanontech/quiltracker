@@ -185,25 +185,12 @@ def index():
         dollar_per_hour = dollar_per_hour.fillna(0)
         dollar_per_day = dollar_per_day.fillna(0)
 
-        # Calculate status for each peer ID
-        status = []
-        for peer_id in latest_balances.index:
-            current_quil_per_day = quil_per_day.get(peer_id, 0)
-            last_1440_quil = last_1440_quil_per_day.get(peer_id, 0)
-            if current_quil_per_day > last_1440_quil:
-                status.append("Overperforming")
-            elif current_quil_per_day < last_1440_quil:
-                status.append("Underperforming")
-            else:
-                status.append("On Track")
-
         # Add columns for Quil metrics and dollar amounts
         latest_balances['Quil Per Minute'] = quil_per_minute.values
         latest_balances['Quil Per Hour'] = quil_per_hour.values
         latest_balances['Quil Per Day'] = quil_per_day.values
         latest_balances['$ Per Hour'] = dollar_per_hour.values
         latest_balances['$ Per Day'] = dollar_per_day.values
-        latest_balances['Status'] = status
 
         # Sort by Quil Per Hour in descending order
         latest_balances = latest_balances.sort_values(by='Quil Per Hour', ascending=False)
@@ -219,7 +206,7 @@ def index():
         total_dollar_per_day = latest_balances['$ Per Day'].sum()
 
         # Prepare table data for rendering
-        table_data = latest_balances[['Balance', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day', 'Status']].reset_index()
+        table_data = latest_balances[['Balance', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day']].reset_index()
         table_data = table_data.to_dict(orient='records')
 
         # Plot: Node Balances Over Time
