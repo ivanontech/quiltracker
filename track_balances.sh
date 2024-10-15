@@ -6,8 +6,8 @@ LOG_FILE="/root/track_balances.log"
 cd /root/ceremonyclient/node || exit 1  # Exit if directory change fails
 
 # Fetch balance and peer ID
-PEER_ID=$(./node-1.4.21.1-linux-amd64 -peer-id | grep "Peer ID" | awk '{print $3}')
-BALANCE=$(./node-1.4.21.1-linux-amd64 -balance | grep "Unclaimed balance" | awk '{print $3}')
+PEER_ID=$(./node-2.0.0.3-linux-amd64 -peer-id | grep "Peer ID" | awk '{print $3}')
+BALANCE=$(./node-2.0.0.3-linux-amd64 -balance | grep "Unclaimed balance" | awk '{print $3}')
 
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
