@@ -19,8 +19,9 @@ BALANCE=$(echo "$NODE_INFO_OUTPUT" | grep "Owned balance" | awk '{print $3}')
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
 # Log all extracted information
-echo "[$DATE] Peer ID: $PEER_ID, Version: $VERSION, Max Frame: $MAX_FRAME, Prover Ring: $PROVER_RING, Seniority: $SENIO>
+echo "[$DATE] Peer ID: $PEER_ID, Version: $VERSION, Max Frame: $MAX_FRAME, Prover Ring: $PROVER_RING, Seniority: $SENIORITY, Balance: $BALANCE" >> $LOG_FILE
 
 # Send the data to the Flask server
 curl -X POST -H "Content-Type: application/json" \
--d "{\"peer_id\":\"$PEER_ID\", \"version\":\"$VERSION\", \"max_frame\":\"$MAX_FRAME\", \"prover_ring\":\"$PROVER_RING\">http://0.0.0.0:5000/update_balance >> $LOG_FILE 2>&1
+-d "{\"peer_id\":\"$PEER_ID\", \"version\":\"$VERSION\", \"max_frame\":\"$MAX_FRAME\", \"prover_ring\":\"$PROVER_RING\", \"seniority\":\"$SENIORITY\", \"balance\":\"$BALANCE\", \"timestamp\":\"$DATE\"}" \
+http://0.0.0.0:5000/update_balance >> $LOG_FILE 2>&1
