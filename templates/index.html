@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node Balances and Metrics</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-    <!-- Dark Mode Fix -->
     <script>
-        // Apply night mode before the page is fully rendered
         (function() {
             const nightMode = localStorage.getItem('nightMode');
             if (nightMode === 'on') {
@@ -18,76 +16,49 @@
     </script>
 
     <style>
-        /* Default Light Mode Styles */
         body {
-            background-color: #f0f0f0; /* Light grey background */
-            color: #333; /* Dark grey text for readability */
+            background-color: #f0f0f0;
+            color: #333;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
             padding: 20px;
             text-align: center;
         }
-
-        /* Blue Gradient Text Style */
         .gradient-text {
-            font-size: 36px; /* Adjust size as needed */
+            font-size: 36px;
             font-weight: bold;
-            background: linear-gradient(90deg, #42275a, #734b6d, #734b6d); /* Blue gradient colors */
+            background: linear-gradient(90deg, #42275a, #734b6d);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
         }
-
         table, th, td {
             border: 1px solid #ccc;
         }
-
         th, td {
             padding: 10px;
             text-align: center;
         }
-
         th {
-            background-color: #42275a; /* Blue color to match gradient */
+            background-color: #42275a;
             color: white;
         }
-
         footer {
             margin-top: 30px;
             font-size: 14px;
             color: #666;
         }
-
-        .wallets {
-            margin-top: 20px;
-        }
-
-        .wallets .wallet-address {
-            font-weight: bold;
-        }
-
-        .wallets p {
-            margin: 10px 0;
-        }
-
         .switch {
             position: relative;
             display: inline-block;
             width: 34px;
             height: 20px;
         }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute;
             cursor: pointer;
@@ -98,7 +69,6 @@
             background-color: #ccc;
             transition: .4s;
         }
-
         .slider:before {
             position: absolute;
             content: "";
@@ -109,96 +79,30 @@
             background-color: white;
             transition: .4s;
         }
-
-        input:checked + .slider {
-            background-color: #42275a; /* Blue color to match the gradient */
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(14px);
-        }
-
-        .slider.round {
-            border-radius: 34px;
-        }
-
-        .slider.round:before {
-            border-radius: 50%;
-        }
-
-        /* Night Mode */
-        body.night-mode {
-            background-color: #000;
-            color: #fff;
-        }
-
-        /* Apply Gradient to Headers in Night Mode */
-        body.night-mode .gradient-text {
-            background: linear-gradient(90deg, #42275a, #734b6d, #734b6d); /* Keep blue gradient in night mode */
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        body.night-mode th {
-            background-color: #42275a; /* Blue for night mode headers */
-        }
-
-        footer.night-mode {
-            color: #666;
-        }
+        input:checked + .slider { background-color: #42275a; }
+        input:checked + .slider:before { transform: translateX(14px); }
+        .slider.round { border-radius: 34px; }
+        .slider.round:before { border-radius: 50%; }
+        body.night-mode { background-color: #000; color: #fff; }
+        body.night-mode th { background-color: #42275a; }
     </style>
 
     <script>
         function toggleNightMode() {
             const body = document.body;
             body.classList.toggle('night-mode');
-
-            // Store the preference in localStorage
             const nightMode = body.classList.contains('night-mode') ? 'on' : 'off';
             localStorage.setItem('nightMode', nightMode);
         }
-
-        function toggleAutoRefresh() {
-            autoRefresh = !autoRefresh;
-        }
-
-        // Automatically refresh the page every 75 seconds if Auto Refresh is on
+        function toggleAutoRefresh() { autoRefresh = !autoRefresh; }
         let autoRefresh = true;
-        setInterval(() => {
-            if (autoRefresh) {
-                window.location.reload();
-            }
-        }, 75000); // 75 seconds
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const nightMode = urlParams.get('night_mode');
-            if (nightMode === 'on') {
-                document.body.classList.add('night-mode');
-            }
-
-            // Load saved input values from localStorage
-            document.querySelectorAll('.node-input').forEach(input => {
-                const savedValue = localStorage.getItem(input.id);
-                if (savedValue) {
-                    input.value = savedValue;
-                }
-
-                // Save the input value whenever it changes
-                input.addEventListener('input', () => {
-                    localStorage.setItem(input.id, input.value);
-                });
-            });
-        });
+        setInterval(() => { if (autoRefresh) window.location.reload(); }, 75000);
     </script>
 </head>
 <body>
-    <!-- Apply Blue Gradient Text to All Relevant Headings -->
     <h1 class="gradient-text">Total Quil Across All Peers: {{ total_balance }} Quil</h1>
-
     <h1 class="gradient-text">Current wQUIL Price: ${{ "{:.4f}".format(wquil_price) }}</h1>
 
-    <!-- Night Mode and Auto-Refresh Switches -->
     <div style="text-align: right; margin-bottom: 20px;">
         <label for="nightMode">Night Mode</label>
         <label class="switch">
@@ -213,19 +117,21 @@
         </label>
     </div>
 
-    <!-- Display Node Statistics table -->
     <h1 class="gradient-text">Node Statistics</h1>
     <table>
         <thead>
             <tr>
-                <th style="width: 5%;">Node</th> <!-- Reduced width of Node column -->
+                <th>Node</th>
                 <th>Peer ID</th>
+                <th>Max Frame</th>
+                <th>Prover Ring</th>
+                <th>Seniority</th>
                 <th>Quil Balance</th>
                 <th>Quil Per Minute</th>
                 <th>Quil Per Hour</th>
-                <th>24-Hour Quil Per Hour</th> <!-- Move 24-Hour Quil Per Hour after Quil Per Hour -->
-                <th>24-Hour Quil Per Day</th> <!-- 24-Hour Quil Per Day -->
-                <th>$ Per Hour</th> <!-- Based on 24-Hour Quil Per Hour -->
+                <th>24-Hour Quil Per Hour</th>
+                <th>24-Hour Quil Per Day</th>
+                <th>$ Per Hour</th>
                 <th>$ Per Day</th>
             </tr>
         </thead>
@@ -234,31 +140,35 @@
             <tr>
                 <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td>
                 <td>{{ row['Peer ID'] }}</td>
+                <td>{{ row['Max Frame'] }}</td>
+                <td>{{ row['Prover Ring'] }}</td>
+                <td>{{ row['Seniority'] }}</td>
                 <td>{{ "{:.4f}".format(row['Balance'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
-                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Hour'] | default(0.0)) }}</td> <!-- 24-Hour Quil Per Hour -->
-                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Day'] | default(0.0)) }}</td> <!-- 24-Hour Quil Per Day -->
-                <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td> <!-- Based on 24-Hour Quil Per Hour -->
+                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Hour'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Day'] | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
                 <td>${{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
             </tr>
             {% endfor %}
-            <!-- Totals row -->
             <tr>
                 <td>Total</td>
+                <td></td>
+                <td></td>
+                <td></td>
                 <td></td>
                 <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
                 <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
-                <td>{{ "{:.4f}".format(total_24_hour_quil_per_hour | default(0.0)) }}</td> <!-- Total 24-Hour Quil Per Hour -->
-                <td>{{ "{:.4f}".format(total_24_hour_quil_per_day | default(0.0)) }}</td> <!-- Total 24-Hour Quil Per Day -->
+                <td>{{ "{:.4f}".format(total_24_hour_quil_per_hour | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_24_hour_quil_per_day | default(0.0)) }}</td>
                 <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>
                 <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>
             </tr>
         </tbody>
     </table>
 
-    <!-- Display the interactive Plotly charts -->
     <h1 class="gradient-text">Node Balances Over Time</h1>
     <div>{{ balance_graph_html | safe }}</div>
 
@@ -271,12 +181,11 @@
     <h1 class="gradient-text">Hourly Growth in Quil</h1>
     <div>{{ hourly_growth_graph_html | safe }}</div>
 
-    <!-- Footer with wallet details -->
     <footer>
         <p>Data visualized from your node logs.</p>
         <div class="wallets">
             <p>Buy me a Coffee (Ethereum): <span class="wallet-address">0x705242cF0ec57707ed96163D324e5c1caA9f781C</span></p>
-            <p class="solana-address">Solana: <span class="wallet-address">9TiE9BWnkFuhudv39uDZPdpoxzBhKnCWrQ1Qx5iyjuSg</span></p>
+            <p>Solana: <span class="wallet-address">9TiE9BWnkFuhudv39uDZPdpoxzBhKnCWrQ1Qx5iyjuSg</span></p>
         </div>
         <p>For more information, visit <a href="https://status.quilibrium.com/" style="color: #005f73;">Quilibrium Status</a>.</p>
         <p>Rent amazing servers at <a href="https://www.cherryservers.com/?affiliate=Z912GG75" style="color: #005f73;">Cherry Servers</a>.</p>
