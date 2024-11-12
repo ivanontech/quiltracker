@@ -118,17 +118,19 @@ def index():
     data_frames = []
     night_mode = request.args.get('night_mode', 'off')
 
-    # Read and combine all CSV files
+    # Read and combine all CSV files, skipping lines with errors
     for file_name in os.listdir(CSV_DIRECTORY):
         if file_name.endswith('.csv'):
             file_path = os.path.join(CSV_DIRECTORY, file_name)
             print(f"Reading CSV file: {file_path}")
-            df = pd.read_csv(file_path)
-
-            if df['Balance'].dtype == 'object':
-                df['Balance'] = df['Balance'].str.extract(r'([\d\.]+)').astype(float)
-
-            data_frames.append(df)
+            try:
+                df = pd.read_csv(file_path, on_bad_lines='skip')  # Skip problematic lines
+                if df['Balance'].dtype == 'object':
+                    df['Balance'] = df['Balance'].str.extract(r'([\d\.]+)').astype(float)
+                data_frames.append(df)
+            except pd.errors.ParserError as e:
+                print(f"Error reading {file_path}: {e}")
+                continue
 
     if data_frames:
         combined_df = pd.concat(data_frames)
