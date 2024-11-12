@@ -65,29 +65,16 @@ def compute_metrics(df, wquil_price):
 
 # Function to calculate Quil earned in the last 1,440 minutes (24 hours)
 def calculate_last_1440_minutes(df):
-    # Sort by date
     df = df.sort_values('Date')
-
-    # Calculate the growth (quil earned) for the last 1,440 records for each peer
     last_1440_values = df.groupby('Peer ID').tail(1440)
-
-    # Calculate Quil per day by comparing the first and last values of these 1,440 records
     last_1440_quil_per_day = last_1440_values.groupby('Peer ID')['Balance'].last() - last_1440_values.groupby('Peer ID')['Balance'].first()
-
     return last_1440_quil_per_day
 
 # Calculate 24-hour Quil Per Hour based on the last 1,440 minutes
 def calculate_last_1440_minutes_quil_per_hour(df):
-    # Sort by date
     df = df.sort_values('Date')
-
-    # Calculate the growth (quil earned) for the last 1,440 records for each peer
     last_1440_values = df.groupby('Peer ID').tail(1440)
-
-    # Calculate Quil per hour
-    last_1440_quil_per_hour = (last_1440_values.groupby('Peer ID')['Balance'].last() - 
-                               last_1440_values.groupby('Peer ID')['Balance'].first()) / 24
-
+    last_1440_quil_per_hour = (last_1440_values.groupby('Peer ID')['Balance'].last() - last_1440_values.groupby('Peer ID')['Balance'].first()) / 24
     return last_1440_quil_per_hour
 
 # Route to update balance data
@@ -97,10 +84,15 @@ def update_balance():
         data = request.get_json()
         print(f"Received data: {data}")
 
-        if not data or 'peer_id' not in data or 'balance' not in data or 'timestamp' not in data:
+        required_fields = {'peer_id', 'version', 'max_frame', 'prover_ring', 'seniority', 'balance', 'timestamp'}
+        if not data or not required_fields.issubset(data):
             return 'Invalid data', 400
 
         peer_id = data['peer_id']
+        version = data['version']
+        max_frame = data['max_frame']
+        prover_ring = data['prover_ring']
+        seniority = data['seniority']
         balance = data['balance']
         timestamp = data['timestamp']
 
@@ -108,10 +100,10 @@ def update_balance():
 
         if not os.path.exists(log_file):
             with open(log_file, 'w') as f:
-                f.write('Date,Peer ID,Balance\n')
+                f.write('Date,Peer ID,Version,Max Frame,Prover Ring,Seniority,Balance\n')
 
         with open(log_file, 'a') as f:
-            f.write(f'{timestamp},{peer_id},{balance}\n')
+            f.write(f'{timestamp},{peer_id},{version},{max_frame},{prover_ring},{seniority},{balance}\n')
 
         print(f"Logged balance for {peer_id}: {balance} at {timestamp}")
         return 'Balance updated', 200
@@ -138,7 +130,6 @@ def index():
 
             data_frames.append(df)
 
-    # Combine all data into a single dataframe
     if data_frames:
         combined_df = pd.concat(data_frames)
         combined_df['Date'] = pd.to_datetime(combined_df['Date'])
@@ -154,7 +145,7 @@ def index():
         last_1440_quil_per_day = calculate_last_1440_minutes(combined_df)
         last_1440_quil_per_hour = calculate_last_1440_minutes_quil_per_hour(combined_df)
 
-        # Fix: Reindex to match lengths of latest_balances and last 1,440 minute data
+        # Reindex to match lengths of latest_balances and last 1,440 minute data
         latest_balances = latest_balances.set_index('Peer ID')
         last_1440_quil_per_day = last_1440_quil_per_day.reindex(latest_balances.index)
         last_1440_quil_per_hour = last_1440_quil_per_hour.reindex(latest_balances.index)
@@ -206,7 +197,7 @@ def index():
         total_dollar_per_day = latest_balances['$ Per Day'].sum()
 
         # Prepare table data for rendering
-        table_data = latest_balances[['Balance', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day']].reset_index()
+        table_data = latest_balances[['Balance', 'Max Frame', 'Prover Ring', 'Seniority', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day']].reset_index()
         table_data = table_data.to_dict(orient='records')
 
         # Plot: Node Balances Over Time
