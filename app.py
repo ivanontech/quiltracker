@@ -176,29 +176,14 @@ def index():
         dollar_per_hour = dollar_per_hour.fillna(0)
         dollar_per_day = dollar_per_day.fillna(0)
 
-        # Add columns for Quil metrics and dollar amounts
-        latest_balances['Quil Per Minute'] = quil_per_minute.values
-        latest_balances['Quil Per Hour'] = quil_per_hour.values
-        latest_balances['Quil Per Day'] = quil_per_day.values
-        latest_balances['$ Per Hour'] = dollar_per_hour.values
-        latest_balances['$ Per Day'] = dollar_per_day.values
-
-        # Sort by Quil Per Hour in descending order
-        latest_balances = latest_balances.sort_values(by='Quil Per Hour', ascending=False)
-
-        # Totals
-        total_quil_balance = latest_balances['Balance'].sum()
-        total_quil_per_minute = latest_balances['Quil Per Minute'].sum()
-        total_quil_per_hour = latest_balances['Quil Per Hour'].sum()
-        total_24_hour_quil_per_hour = latest_balances['24-Hour Quil Per Hour'].sum()
-        total_dollar_per_hour = latest_balances['$ Per Hour'].sum()
-        total_quil_per_day = latest_balances['Quil Per Day'].sum()
-        total_24_hour_quil_per_day = latest_balances['24-Hour Quil Per Day'].sum()
-        total_dollar_per_day = latest_balances['$ Per Day'].sum()
+        # Ensure all required columns are present in latest_balances
+        columns = ['Balance', 'Max Frame', 'Prover Ring', 'Seniority', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day']
+        for col in columns:
+            if col not in latest_balances.columns:
+                latest_balances[col] = 0  # Fill missing columns with default value of 0
 
         # Prepare table data for rendering
-        table_data = latest_balances[['Balance', 'Max Frame', 'Prover Ring', 'Seniority', 'Quil Per Day', '24-Hour Quil Per Day', 'Quil Per Minute', 'Quil Per Hour', '24-Hour Quil Per Hour', '$ Per Hour', '$ Per Day']].reset_index()
-        table_data = table_data.to_dict(orient='records')
+        table_data = latest_balances[columns].reset_index()
 
         # Plot: Node Balances Over Time
         balance_fig = px.line(combined_df, x='Date', y='Balance', color='Peer ID', title='Node Balances Over Time')
@@ -224,14 +209,14 @@ def index():
         balance_graph_html = quil_minute_graph_html = hourly_growth_graph_html = earnings_per_hour_graph_html = ""
 
     return render_template('index.html', table_data=table_data,
-                           total_balance=total_quil_balance,
-                           total_quil_per_minute=total_quil_per_minute,
-                           total_quil_per_hour=total_quil_per_hour,
-                           total_24_hour_quil_per_hour=total_24_hour_quil_per_hour,
-                           total_dollar_per_hour=total_dollar_per_hour,
-                           total_quil_per_day=total_quil_per_day,
-                           total_24_hour_quil_per_day=total_24_hour_quil_per_day,
-                           total_dollar_per_day=total_dollar_per_day,
+                           total_balance=latest_balances['Balance'].sum(),
+                           total_quil_per_minute=latest_balances['Quil Per Minute'].sum(),
+                           total_quil_per_hour=latest_balances['Quil Per Hour'].sum(),
+                           total_24_hour_quil_per_hour=latest_balances['24-Hour Quil Per Hour'].sum(),
+                           total_dollar_per_hour=dollar_per_hour.sum(),
+                           total_quil_per_day=latest_balances['Quil Per Day'].sum(),
+                           total_24_hour_quil_per_day=latest_balances['24-Hour Quil Per Day'].sum(),
+                           total_dollar_per_day=dollar_per_day.sum(),
                            balance_graph_html=balance_graph_html,
                            quil_minute_graph_html=quil_minute_graph_html,
                            hourly_growth_graph_html=hourly_growth_graph_html,
